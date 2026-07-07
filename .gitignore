@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+marketing/
+*.log
+.DS_Store
+.claude/
+# lokale Test-/Scratch-Dateien
+ddg.html
+ddg2.html
+ddgv.html

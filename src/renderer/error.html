@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+    />
+    <title>Tor benötigt</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-canvas min-h-screen grid place-items-center">
+    <div class="max-w-md text-center px-8">
+      <div class="mx-auto mb-6 grid place-items-center h-16 w-16 rounded-2xl glass" style="color:var(--veil-accent)">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+      </div>
+      <h1 class="text-xl font-semibold mb-2">.onion-Seite nicht erreichbar</h1>
+      <p class="text-sm text-[#9aa0ad] leading-relaxed mb-6">
+        Veil ist mit dem Tor-Netzwerk verbunden, aber dieser Onion-Dienst hat nicht
+        geantwortet. Das passiert, wenn die Seite offline ist, die Adresse veraltet
+        ist oder der Dienst gerade überlastet ist.
+      </p>
+      <div class="glass rounded-xl2 p-5 text-left text-sm text-[#c7ccd6] space-y-2">
+        <div class="flex gap-3"><span class="text-[var(--veil-accent)] font-bold">•</span><span>Prüfe, ob die <b>.onion-Adresse</b> exakt stimmt (sie sind lang und zufällig).</span></div>
+        <div class="flex gap-3"><span class="text-[var(--veil-accent)] font-bold">•</span><span>Versuch es später erneut — Onion-Dienste sind oft zeitweise offline.</span></div>
+      </div>
+    </div>
+  </body>
+</html>

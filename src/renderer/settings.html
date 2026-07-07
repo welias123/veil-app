@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+    />
+    <title>Einstellungen</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body { overflow-y: auto; }
+    </style>
+  </head>
+  <body class="page-canvas min-h-screen">
+    <main class="max-w-3xl mx-auto px-8 py-14">
+      <header class="mb-8">
+        <h1 class="text-2xl font-semibold tracking-tight">Einstellungen</h1>
+        <p class="text-sm text-[#7b8291] mt-1">Konfiguriere Privatsphäre, Tor-Routing und das Erscheinungsbild.</p>
+      </header>
+      <div id="sections" class="space-y-5"></div>
+      <footer class="mt-10 text-center text-xs text-[#5b6473]">Veil Browser · v0.1.0</footer>
+    </main>
+    <script src="settings.js"></script>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil: https:;"
+    />
+    <title>Verlauf</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>body { overflow-y: auto; }</style>
+  </head>
+  <body class="page-canvas min-h-screen">
+    <main class="max-w-3xl mx-auto px-8 py-12">
+      <header class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">Verlauf</h1>
+          <p class="text-sm text-[#7b8291] mt-1">Deine besuchten Seiten — lokal gespeichert.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="delSel" class="hidden glass glass-hover text-sm px-4 py-2 rounded-lg text-[#ff8b9e]">Auswahl löschen</button>
+          <button id="clear" class="glass glass-hover text-sm px-4 py-2 rounded-lg text-[#ff8b9e]">Alles löschen</button>
+        </div>
+      </header>
+      <div class="glass glass-hover flex items-center gap-2 h-10 rounded-xl px-4 mb-5 accent-ring">
+        <svg class="text-[#6b7280]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="filter" type="text" placeholder="Verlauf durchsuchen…" class="flex-1 bg-transparent outline-none text-sm placeholder:text-[#6b7280]" />
+      </div>
+      <div id="list" class="space-y-1"></div>
+      <div id="empty" class="hidden text-center text-sm text-[#7b8291] py-16">Noch kein Verlauf.</div>
+    </main>
+    <script src="history.js"></script>
+  </body>
+</html>

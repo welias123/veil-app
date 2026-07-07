@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Veil — Der Browser, der dich schützt</title>
+    <meta name="description" content="Veil ist ein moderner, privater Desktop-Browser: eingebautes Tor, Werbe-/Tracker-Blocker, kostenlose KI-Suche und ein elegantes Dark-Design." />
+    <link rel="icon" href="icon.svg" />
+    <style>
+      :root {
+        --accent: #7c6cff;
+        --accent-soft: rgba(124, 108, 255, 0.16);
+        --bg: #0a0b10;
+        --surface: rgba(20, 22, 30, 0.6);
+        --text: #e7e9ef;
+        --muted: #8b93a3;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+      .bg-aurora {
+        position: fixed; inset: 0; z-index: -1; pointer-events: none;
+        background:
+          radial-gradient(900px 600px at 12% -8%, var(--accent-soft), transparent 60%),
+          radial-gradient(760px 560px at 108% 12%, rgba(51, 214, 196, 0.09), transparent 55%),
+          linear-gradient(160deg, #0c0e14 0%, #0a0b10 55%, #070810 100%);
+      }
+      a { color: inherit; text-decoration: none; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+      .glass {
+        background: var(--surface);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px) saturate(150%);
+        -webkit-backdrop-filter: blur(20px) saturate(150%);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+      }
+      .btn {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 13px 24px; border-radius: 14px; font-weight: 600; font-size: 15px;
+        background: var(--accent); color: #fff; transition: transform 0.14s ease, box-shadow 0.2s ease;
+        box-shadow: 0 10px 30px -8px var(--accent);
+      }
+      .btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -10px var(--accent); }
+      .btn-ghost { background: transparent; color: var(--text); box-shadow: none; border: 1px solid rgba(255,255,255,0.12); }
+      .btn-ghost:hover { background: rgba(255,255,255,0.05); box-shadow: none; }
+
+      /* Nav */
+      nav {
+        position: sticky; top: 0; z-index: 50;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(10, 11, 16, 0.7); backdrop-filter: blur(14px);
+      }
+      nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+      .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+      .brand img { width: 30px; height: 30px; border-radius: 9px; }
+
+      /* Hero */
+      header.hero { text-align: center; padding: 96px 0 72px; }
+      .logo-glow { position: relative; width: 104px; height: 104px; margin: 0 auto 30px; }
+      .logo-glow .glow { position: absolute; inset: -20%; filter: blur(34px); opacity: 0.55;
+        background: radial-gradient(circle, var(--accent), transparent 70%); }
+      .logo-glow img { position: relative; width: 104px; height: 104px; border-radius: 26px; }
+      .hero h1 { font-size: clamp(40px, 7vw, 68px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+      .hero h1 .grad {
+        background: linear-gradient(120deg, #8b7bff, #5b8def 55%, #33d6c4);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .hero p.sub { color: var(--muted); font-size: clamp(16px, 2.4vw, 20px); max-width: 620px; margin: 20px auto 34px; }
+      .hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+      .hero .note { color: #5b6473; font-size: 13px; margin-top: 18px; }
+
+      /* 3D browser showcase (animates in once on load) */
+      .showcase { perspective: 1700px; margin-top: 60px; display: flex; justify-content: center; }
+      .browser {
+        width: min(900px, 94vw);
+        border-radius: 16px; overflow: hidden;
+        background: #0c0e15; border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 50px 130px -35px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.03);
+        transform-origin: center 38%;
+        animation: browserIn 1.5s cubic-bezier(0.16, 0.75, 0.2, 1) both;
+      }
+      @keyframes browserIn {
+        0%   { opacity: 0; transform: rotateX(26deg) rotateY(-30deg) translateY(70px) scale(0.9); }
+        100% { opacity: 1; transform: rotateX(13deg) rotateY(-15deg) rotate(0.6deg) scale(0.98); }
+      }
+      .b-tabs { display: flex; gap: 6px; padding: 9px 12px; background: #0e1119; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      .b-tab { height: 26px; border-radius: 7px; padding: 0 12px; display: flex; align-items: center; gap: 7px; font-size: 12px; color: #aeb4c2; background: rgba(255,255,255,0.04); }
+      .b-tab.active { background: rgba(124,108,255,0.15); color: #fff; }
+      .b-tab img { border-radius: 3px; }
+      .b-tab .dot { width: 6px; height: 6px; border-radius: 50%; }
+      .b-toolbar { display: flex; align-items: center; gap: 12px; padding: 9px 14px; }
+      .b-nav { display: flex; gap: 9px; color: #565e6e; }
+      .b-address { flex: 1; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #8b93a3; gap: 8px; }
+      .b-shield { font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+      .b-body { display: flex; height: 300px; }
+      .b-side { width: 48px; background: #0b0d14; border-right: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 15px 0; }
+      .b-side .s { width: 20px; height: 20px; border-radius: 6px; background: rgba(255,255,255,0.06); }
+      .b-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        background: radial-gradient(620px 300px at 50% -12%, rgba(124,108,255,0.06), transparent 60%), #0b0d12; }
+      .b-content .clock { font-size: 26px; font-weight: 600; color: #eceef3; }
+      .b-search { width: min(440px, 82%); height: 40px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; padding: 0 16px; color: #6b7280; font-size: 13px; gap: 11px; }
+      .b-cards { display: flex; gap: 12px; width: min(490px, 90%); }
+      .b-card { flex: 1; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 12px 14px; }
+      .b-card .ci { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 10px; }
+      .b-card b { display: block; font-size: 19px; font-weight: 700; color: #eceef3; letter-spacing: -0.01em; }
+      .b-card small { color: #7b8291; font-size: 11px; }
+
+      /* Sections */
+      section { padding: 72px 0; }
+      .eyebrow { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+      h2 { font-size: clamp(28px, 4.5vw, 40px); font-weight: 800; letter-spacing: -0.02em; margin: 10px 0 8px; }
+      .lead { color: var(--muted); max-width: 620px; }
+
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+      .card { border-radius: 20px; padding: 26px; }
+      .card .ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+        background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
+      .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+      .card p { color: var(--muted); font-size: 14.5px; }
+
+      /* Feature list */
+      .features { columns: 2; column-gap: 40px; margin-top: 34px; }
+      .features li { list-style: none; padding: 9px 0 9px 30px; position: relative; color: #c7ccd6; break-inside: avoid; }
+      .features li::before { content: ""; position: absolute; left: 0; top: 15px; width: 16px; height: 16px;
+        background: var(--accent-soft); border-radius: 6px; }
+      .features li::after { content: "✓"; position: absolute; left: 3px; top: 8px; color: var(--accent); font-size: 12px; font-weight: 800; }
+      .features li b { color: var(--text); font-weight: 600; }
+
+      /* Developer */
+      .dev { border-radius: 24px; padding: 40px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+      .dev .avatar { width: 84px; height: 84px; border-radius: 22px; display: grid; place-items: center;
+        background: linear-gradient(135deg, var(--accent), #33d6c4); font-size: 34px; font-weight: 800; color: #0a0b10; flex-shrink: 0; }
+      .dev .who { flex: 1; min-width: 220px; }
+      .dev .who h3 { font-size: 22px; font-weight: 800; }
+      .dev .who p { color: var(--muted); }
+      .discord { background: #5865F2; box-shadow: 0 10px 30px -8px #5865F2; }
+      .discord:hover { box-shadow: 0 16px 40px -10px #5865F2; }
+
+      /* CTA */
+      .cta-band { text-align: center; border-radius: 28px; padding: 60px 32px; }
+      .cta-band h2 { margin-bottom: 8px; }
+
+      footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 30px 0; color: #5b6473; font-size: 14px; }
+      footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+      @media (max-width: 780px) {
+        .grid { grid-template-columns: 1fr; }
+        .features { columns: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-aurora"></div>
+
+    <nav>
+      <div class="wrap">
+        <a class="brand" href="#top"><img src="icon.svg" alt="Veil" /> Veil</a>
+        <a class="btn" href="#download">Herunterladen</a>
+      </div>
+    </nav>
+
+    <header class="hero" id="top">
+      <div class="wrap">
+        <div class="logo-glow">
+          <div class="glow"></div>
+          <img src="icon.svg" alt="Veil" />
+        </div>
+        <h1>Der Browser, der <span class="grad">dich schützt</span>.</h1>
+        <p class="sub">
+          Veil ist ein schneller, privater Desktop-Browser: eingebautes Tor, ein starker Werbe- &
+          Tracker-Blocker, eine kostenlose KI-Suche — und ein Design, das nicht nach Baukasten aussieht.
+        </p>
+        <div class="cta">
+          <a class="btn" href="#download">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            Für Windows herunterladen
+          </a>
+          <a class="btn btn-ghost" href="#features">Funktionen ansehen</a>
+        </div>
+        <p class="note">Kostenlos · keine Konten · keine Tracker · für Windows 10/11</p>
+
+        <!-- 3D Veil app showcase — flies in once on load -->
+        <div class="showcase">
+          <div class="browser">
+            <div class="b-tabs">
+              <div class="b-tab active"><svg width="13" height="13" viewBox="0 0 512 512" style="border-radius:3px"><rect width="512" height="512" rx="130" fill="#6c5cf0"/><path d="M156 162 256 366 356 162" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Neuer Tab</div>
+              <div class="b-tab"><span class="dot" style="background:#33d6c4"></span> Suche</div>
+              <div class="b-tab"><span class="dot" style="background:var(--accent)"></span> .onion</div>
+            </div>
+            <div class="b-toolbar">
+              <div class="b-nav">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M20.5 9A9 9 0 0 0 5.6 5.6L1 10m22 4l-4.6 4.4A9 9 0 0 1 3.5 15"/></svg>
+              </div>
+              <div class="b-address">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                Privat suchen mit Veil…
+              </div>
+              <div class="b-shield">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                1.2k
+              </div>
+            </div>
+            <div class="b-body">
+              <div class="b-side"><div class="s"></div><div class="s"></div><div class="s" style="margin-top:auto"></div><div class="s"></div></div>
+              <div class="b-content">
+                <svg width="46" height="46" viewBox="0 0 512 512" style="border-radius:13px"><defs><linearGradient id="mv" x1="72" y1="56" x2="440" y2="456" gradientUnits="userSpaceOnUse"><stop stop-color="#8b7bff"/><stop offset=".5" stop-color="#6c5cf0"/><stop offset="1" stop-color="#3f36a6"/></linearGradient></defs><rect x="32" y="32" width="448" height="448" rx="116" fill="url(#mv)"/><path d="M156 162 256 366 356 162" stroke="#fff" stroke-width="42" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                <div class="clock">14:32</div>
+                <div class="b-search">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                  Privat suchen mit Veil…
+                </div>
+                <div class="b-cards">
+                  <div class="b-card">
+                    <span class="ci" style="background:var(--accent-soft);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    <b>1.275</b><small>Tracker blockiert</small>
+                  </div>
+                  <div class="b-card">
+                    <span class="ci" style="background:rgba(51,214,196,0.14);color:#33d6c4"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span>
+                    <b>68.5 MB</b><small>gespart</small>
+                  </div>
+                  <div class="b-card">
+                    <span class="ci" style="background:rgba(240,163,62,0.14);color:#f0a33e"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <b>1 Min</b><small>Zeit gespart</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="eyebrow">Warum Veil</div>
+        <h2>Privatsphäre, die einfach mitläuft</h2>
+        <p class="lead">Kein Setup, keine Erweiterungen. Öffnen und sicher surfen.</p>
+
+        <div class="grid">
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3>Veil Shields</h3>
+            <p>Blockiert Werbung & Tracker nativ — mit Live-Zähler, wie viel du gespart hast.</p>
+          </div>
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+            <h3>Tor integriert</h3>
+            <p>.onion-Seiten öffnen sich von selbst — Veil lädt & verbindet Tor automatisch.</p>
+          </div>
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.6 2.9L16 19l-4-3.6L8 19l1.1-6.1L4.5 10l5.6-1.4z"/></svg></div>
+            <h3>Veil AI</h3>
+            <p>Kostenlose KI-Antworten direkt in der Suche — ohne Konto, ohne Key, für jeden.</p>
+          </div>
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+            <h3>Eigene Suche</h3>
+            <p>Werbefreie Veil-Suche mit Web, Videos & Nachrichten — keine Weiterleitung zu Dritten.</p>
+          </div>
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg></div>
+            <h3>Fingerprint-Schutz</h3>
+            <p>HTTPS erzwingen, Cookie-Banner blocken, Anti-Fingerprinting — alles optional dabei.</p>
+          </div>
+          <div class="card glass">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 9h18"/></svg></div>
+            <h3>Elegantes Design</h3>
+            <p>Glassmorphism, Hell/Dunkel-Themes, verschiebbar & aufgeräumt — kein Baukasten-Look.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="eyebrow">Alles drin</div>
+        <h2>Was Veil kann</h2>
+        <ul class="features">
+          <li><b>Tabs</b> mit Mittelklick-Schließen & Vollbild</li>
+          <li><b>Omnibox</b> mit Verlaufs- & Suchvorschlägen</li>
+          <li><b>Lesezeichen</b> mit Leiste (Strg+D)</li>
+          <li><b>Verlauf</b> durchsuchen & löschen (Strg+H)</li>
+          <li><b>Downloads</b>-Panel mit Fortschritt</li>
+          <li><b>Werbe- & Tracker-Blocker</b> mit Statistik</li>
+          <li><b>Tor</b> für .onion — automatisch</li>
+          <li><b>Onion-Modus</b> mit lila Rahmen</li>
+          <li><b>Veil AI</b> — Fragen direkt beantwortet</li>
+          <li><b>YouTube</b> ohne Werbung, Vollbild</li>
+          <li><b>Hell/Dunkel-Theme</b>, Lila-Akzent</li>
+          <li><b>Als Standardbrowser</b> festlegbar</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="dev glass">
+          <div class="avatar">E</div>
+          <div class="who">
+            <div class="eyebrow">Entwickler</div>
+            <h3>Elias</h3>
+            <p>Veil wird von einer Person entwickelt — mit Fokus auf Privatsphäre & gutes Design. Fragen, Feedback oder Ideen? Komm auf Discord.</p>
+          </div>
+          <a class="btn discord" href="https://discord.com/users/thomasmueller33_45378" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.4a18 18 0 0 1 4.3 1.3 16.6 16.6 0 0 0-14.9 0A18 18 0 0 1 8.9 3.4L8.6 3a19.8 19.8 0 0 0-4.9 1.4C.6 9 0 13.6.3 18.1A19.9 19.9 0 0 0 6.4 21l.5-.7a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l.5.7a19.9 19.9 0 0 0 6.1-3c.4-5.3-.6-9.8-3.4-13.6zM8.4 15.3c-1.2 0-2.1-1.1-2.1-2.4S7.2 10.5 8.4 10.5s2.1 1.1 2.1 2.4-1 2.4-2.1 2.4zm7.2 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.1 1.1 2.1 2.4-.9 2.4-2.1 2.4z"/></svg>
+            Discord: Elias | Veil
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="wrap">
+        <div class="cta-band glass">
+          <div class="eyebrow">Download</div>
+          <h2>Hol dir Veil</h2>
+          <p class="lead" style="margin: 0 auto 26px;">Für Windows 10 & 11 und macOS. Entpacken, <b>Veil</b> starten — fertig.</p>
+          <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+            <a id="dl-win" class="btn" href="https://github.com/welias123/veil-app/releases/latest/download/Veil-Setup.exe">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10 4.6v6.9H3V5.5zm0 13 7 .9v-6.9H3v6zm8 1L21 21v-8.5H11v7zm0-15v7.5h10V3l-10 1.5z"/></svg>
+              Windows
+            </a>
+            <a id="dl-mac" class="btn btn-ghost" href="https://github.com/welias123/veil-app/releases/latest/download/Veil-macOS.dmg">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1.1 2.6-2.2.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.5zM14.2 6.3c.6-.7 1-1.7.9-2.8-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 0 2-.6 2.6-1.3z"/></svg>
+              macOS
+            </a>
+          </div>
+          <p class="lead" style="margin: 16px auto 0; font-size: 13px;">Windows aktualisiert sich automatisch im Browser. <span id="mac-note" style="display:none;">Unter macOS lädst du neue Updates jedes Mal manuell hier herunter.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="brand"><img src="icon.svg" alt="Veil" style="width:24px;height:24px;border-radius:7px" /> Veil</div>
+        <div>© 2026 Veil · entwickelt von Elias · privat by design</div>
+      </div>
+    </footer>
+    <script>
+      // Highlight the download button matching the visitor's OS and, on macOS,
+      // reveal the manual-update note.
+      (function () {
+        var p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+        var ua = navigator.userAgent || "";
+        var isMac = /Mac/i.test(p) || /Mac OS X/i.test(ua);
+        var win = document.getElementById("dl-win");
+        var mac = document.getElementById("dl-mac");
+        if (isMac && win && mac) {
+          win.classList.add("btn-ghost");
+          mac.classList.remove("btn-ghost");
+          var note = document.getElementById("mac-note");
+          if (note) note.style.display = "inline";
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+    />
+    <title>Verbinde mit Tor…</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-canvas min-h-screen grid place-items-center">
+    <div class="max-w-md w-full text-center px-8">
+      <div class="mx-auto mb-6 grid place-items-center h-16 w-16 rounded-2xl glass" style="color:var(--veil-accent)">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h1 class="text-xl font-semibold mb-1">Verbinde mit dem Tor-Netzwerk</h1>
+      <p id="host" class="text-sm text-[#7b8291] mb-6 truncate"></p>
+
+      <div class="glass rounded-xl2 p-5">
+        <div id="phase" class="text-sm text-[#c7ccd6] mb-3">Wird vorbereitet…</div>
+        <div class="h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div id="bar" class="h-full rounded-full transition-all duration-300" style="width:0%;background:var(--veil-accent)"></div>
+        </div>
+      </div>
+      <p class="text-xs text-[#5b6473] mt-4">Beim ersten Mal lädt Veil Tor automatisch herunter. Danach geht es sofort.</p>
+    </div>
+    <script src="connecting.js"></script>
+  </body>
+</html>

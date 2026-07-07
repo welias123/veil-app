@@ -1,0 +1,87 @@
+{
+  "name": "veil-browser",
+  "version": "1.1.0",
+  "description": "Veil — a modern, privacy-first desktop browser with native Tor routing and built-in shields.",
+  "author": "Veil",
+  "license": "MIT",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:css": "tailwindcss -i src/renderer/styles.css -o dist/renderer/styles.css --minify",
+    "dev": "cross-env NODE_ENV=development node build.mjs --watch",
+    "start": "electron .",
+    "app": "npm run build && npm run start",
+    "icons": "node scripts/make-icons.mjs",
+    "pack": "npm run icons && npm run build && electron-builder --dir",
+    "dist": "npm run icons && npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.5.0",
+    "cross-fetch": "^4.0.0",
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.2",
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^35.7.5",
+    "electron-builder": "^25.0.0",
+    "esbuild": "^0.24.0",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.0"
+  },
+  "build": {
+    "appId": "com.veil.browser",
+    "productName": "Veil",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "icon.svg",
+      "package.json"
+    ],
+    "extraResources": [
+      "icon.svg"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "welias123",
+      "repo": "veil-app"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "zip", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico",
+      "signingHashAlgorithms": null,
+      "sign": null,
+      "forceCodeSigning": false,
+      "artifactName": "Veil-Windows.${ext}"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["universal"] }
+      ],
+      "icon": "build/icon.png",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "category": "public.app-category.utilities",
+      "artifactName": "Veil-macOS.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Veil",
+      "artifactName": "Veil-Setup.exe"
+    }
+  }
+}

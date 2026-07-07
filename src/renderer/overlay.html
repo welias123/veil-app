@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+    />
+    <title>Veil</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      html, body { background: transparent; overflow: hidden; }
+      /* Subtle scrim so the panel reads as a modal even if the page shows through */
+      #scrim { position: fixed; inset: 0; background: rgba(4, 5, 8, 0.35); }
+      #panel { position: fixed; top: 92px; }
+      .animate-pop { animation: pop 0.14s ease; }
+      @keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+      /* Shield toggle confirmation animations */
+      .shield-on { animation: shieldOn 0.4s ease; }
+      .shield-off { animation: shieldOff 0.4s ease; }
+      @keyframes shieldOn {
+        0% { transform: scale(1); }
+        35% { transform: scale(1.25) rotate(-6deg); }
+        100% { transform: scale(1) rotate(0); }
+      }
+      @keyframes shieldOff {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(0.8); opacity: 0.5; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scrim"></div>
+    <div id="panel" class="animate-pop"></div>
+    <!-- Omnibox suggestion list (overlays the page, anchored to the top) -->
+    <div id="omni" class="hidden fixed left-0 top-0 w-full px-3">
+      <div id="omniInner" class="glass rounded-xl shadow-glass max-h-[336px] overflow-y-auto max-w-3xl mx-auto py-1"></div>
+    </div>
+    <script src="overlay.js"></script>
+  </body>
+</html>

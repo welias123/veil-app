@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+    />
+    <title>Neuer Tab</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body { overflow-y: auto; }
+    </style>
+  </head>
+  <body class="page-canvas min-h-screen">
+    <!-- Brand, top-left (like Brave) -->
+    <div class="fixed top-6 left-8 flex items-center gap-2.5 select-none z-10">
+      <img src="icon.svg" alt="Veil" width="28" height="28" class="rounded-lg shadow-glass-sm" />
+      <span class="text-base font-semibold tracking-tight">Veil</span>
+    </div>
+
+    <main class="relative max-w-5xl mx-auto px-8 py-16 flex flex-col items-center">
+      <!-- Hero: Veil brand + clock -->
+      <div class="w-full flex flex-col items-center text-center mb-8">
+        <img src="icon.svg" alt="Veil" width="60" height="60" class="rounded-2xl mb-6 opacity-95" />
+        <div id="clock" class="text-5xl font-medium tracking-tight tabular-nums text-[#eceef3]">--:--</div>
+        <div id="greeting" class="mt-2 text-[#7b8291] text-sm"></div>
+      </div>
+
+      <!-- Search -->
+      <div class="w-full max-w-2xl mb-14">
+        <div class="accent-ring glass glass-hover flex items-center gap-3 h-14 rounded-2xl px-5 shadow-glass">
+          <svg class="text-[#6b7280] shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="search" type="text" spellcheck="false" autocomplete="off"
+            placeholder="Privat suchen mit Veil…"
+            class="flex-1 bg-transparent outline-none text-base placeholder:text-[#6b7280]" />
+          <kbd class="text-[10px] text-[#6b7280] border border-white/10 rounded px-1.5 py-0.5">↵</kbd>
+        </div>
+      </div>
+
+      <!-- Analytics -->
+      <section class="w-full">
+        <div class="flex items-center justify-between mb-4 px-1">
+          <div>
+            <h2 class="text-sm font-semibold text-[#e7e9ef]">Deine Privatsphäre</h2>
+            <p class="text-xs text-[#7b8291]">Seit der Installation von Veil geschützt</p>
+          </div>
+          <span id="shieldState" class="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            style="background: var(--veil-accent-soft); color: var(--veil-accent)">Shields aktiv</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Card 1: blocked -->
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-4">
+              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: var(--veil-accent-soft); color: var(--veil-accent)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </span>
+            </div>
+            <div id="blockedValue" class="text-3xl font-bold tabular-nums tracking-tight">0</div>
+            <div class="mt-1 text-sm text-[#9aa0ad]">Tracker &amp; Werbung blockiert</div>
+          </div>
+
+          <!-- Card 2: bandwidth -->
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-4">
+              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: rgba(51,214,196,0.14); color: #33d6c4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="bwValue" class="text-3xl font-bold tabular-nums tracking-tight">0</span>
+              <span id="bwUnit" class="text-lg font-semibold text-[#9aa0ad]">MB</span>
+            </div>
+            <div class="mt-1 text-sm text-[#9aa0ad]">Bandbreite gespart</div>
+          </div>
+
+          <!-- Card 3: time -->
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-4">
+              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: rgba(240,163,62,0.14); color: #f0a33e">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="timeValue" class="text-3xl font-bold tabular-nums tracking-tight">0</span>
+              <span id="timeUnit" class="text-lg font-semibold text-[#9aa0ad]">Min</span>
+            </div>
+            <div class="mt-1 text-sm text-[#9aa0ad]">Zeit gespart</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="newtab.js"></script>
+  </body>
+</html>

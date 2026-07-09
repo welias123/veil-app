@@ -9,18 +9,92 @@
     <title>Einstellungen</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-      body { overflow-y: auto; }
+      /* Brave-style settings: left category sidebar + top search + grouped rows. */
+      body { overflow: hidden; }
+      .st-wrap { display: flex; height: 100vh; }
+
+      /* Sidebar */
+      .st-side {
+        width: 258px; flex-shrink: 0; height: 100vh; overflow-y: auto;
+        border-right: 1px solid rgba(255,255,255,0.07); padding: 26px 14px;
+      }
+      html.theme-light .st-side { border-color: rgba(0,0,0,0.08); }
+      .st-logo { display: flex; align-items: center; gap: 11px; padding: 0 12px 22px; }
+      .st-logo img { width: 26px; height: 26px; border-radius: 8px; }
+      .st-logo span { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+      #st-nav { display: flex; flex-direction: column; gap: 2px; }
+      .st-nav-item {
+        display: flex; align-items: center; gap: 13px; padding: 10px 12px; border-radius: 10px;
+        color: #b3b9c5; font-size: 14px; cursor: pointer; transition: background 0.12s ease, color 0.12s ease;
+      }
+      .st-nav-item svg { width: 18px; height: 18px; opacity: 0.85; }
+      .st-nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+      html.theme-light .st-nav-item { color: #4b5060; }
+      html.theme-light .st-nav-item:hover { background: rgba(0,0,0,0.05); color: #111; }
+      .st-nav-item.active { background: var(--veil-accent-soft); color: var(--veil-accent); font-weight: 600; }
+      .st-nav-item.active svg { opacity: 1; }
+
+      /* Content */
+      .st-content { flex: 1; height: 100vh; overflow-y: auto; }
+      .st-searchbar {
+        position: sticky; top: 0; z-index: 10; padding: 22px 40px 16px;
+        background: linear-gradient(180deg, #0b0d12 72%, transparent);
+      }
+      html.theme-light .st-searchbar { background: linear-gradient(180deg, #eef0f5 72%, transparent); }
+      .st-search {
+        max-width: 680px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
+        height: 46px; padding: 0 18px; border-radius: 999px;
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        transition: border-color 0.14s ease, box-shadow 0.14s ease;
+      }
+      html.theme-light .st-search { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.12); }
+      .st-search:focus-within { border-color: var(--veil-accent); box-shadow: 0 0 0 3px var(--veil-accent-soft); }
+      .st-search input { flex: 1; background: transparent; border: none; outline: none; color: inherit; font-size: 14.5px; }
+      .st-search input::placeholder { color: #6b7280; }
+
+      .st-sections { max-width: 680px; margin: 0 auto; padding: 8px 40px 80px; }
+
+      .st-section { margin-bottom: 34px; scroll-margin-top: 84px; }
+      .st-sec-head { display: flex; align-items: center; gap: 12px; margin: 0 4px 14px; }
+      .st-sec-head svg { width: 20px; height: 20px; color: var(--veil-accent); }
+      .st-sec-head h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+      .st-sec-head p { font-size: 12.5px; color: #7b8291; margin-top: 1px; }
+
+      .st-panel {
+        border-radius: 16px; background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(255,255,255,0.06); padding: 4px 18px;
+      }
+      html.theme-light .st-panel { background: #fff; border-color: rgba(0,0,0,0.07); }
+      .st-panel > .st-row + .st-row { border-top: 1px solid rgba(255,255,255,0.06); }
+      html.theme-light .st-panel > .st-row + .st-row { border-top-color: rgba(0,0,0,0.06); }
+      .st-row.hidden { display: none !important; }
+
+      .st-empty { max-width: 680px; margin: 0 auto; padding: 40px; text-align: center; color: #7b8291; font-size: 14px; }
+      .st-foot { max-width: 680px; margin: 0 auto; padding: 0 40px 40px; text-align: center; font-size: 12px; color: #5b6473; }
+
+      @media (max-width: 720px) {
+        .st-side { display: none; }
+      }
     </style>
   </head>
-  <body class="page-canvas min-h-screen">
-    <main class="max-w-3xl mx-auto px-8 py-14">
-      <header class="mb-8">
-        <h1 class="text-2xl font-semibold tracking-tight">Einstellungen</h1>
-        <p class="text-sm text-[#7b8291] mt-1">Konfiguriere Privatsphäre, Tor-Routing und das Erscheinungsbild.</p>
-      </header>
-      <div id="sections" class="space-y-5"></div>
-      <footer class="mt-10 text-center text-xs text-[#5b6473]">Veil Browser · v0.1.0</footer>
-    </main>
+  <body class="page-canvas">
+    <div class="st-wrap">
+      <aside class="st-side">
+        <div class="st-logo"><img src="icon.svg" alt="Veil" /> <span>Einstellungen</span></div>
+        <nav id="st-nav"></nav>
+      </aside>
+      <div class="st-content">
+        <div class="st-searchbar">
+          <div class="st-search">
+            <svg style="color:#6b7280;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input id="st-search" type="text" spellcheck="false" autocomplete="off" placeholder="In den Einstellungen suchen" />
+          </div>
+        </div>
+        <div id="sections" class="st-sections"></div>
+        <div id="st-empty" class="st-empty" hidden>Keine passenden Einstellungen gefunden.</div>
+        <div class="st-foot">Veil Browser · v1.2.0</div>
+      </div>
+    </div>
     <script src="settings.js"></script>
   </body>
 </html>

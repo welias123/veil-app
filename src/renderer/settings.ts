@@ -37,9 +37,10 @@ async function update(patch: Partial<Settings>) {
 
 /** Re-render while preserving scroll position so the page never jumps to top. */
 function rerender() {
-  const y = window.scrollY;
+  const content = document.querySelector<HTMLElement>(".st-content");
+  const y = content?.scrollTop ?? 0;
   render();
-  window.scrollTo(0, y);
+  if (content) content.scrollTop = y;
 }
 
 // ---------- Control builders ----------
@@ -82,12 +83,27 @@ function slider(key: keyof Settings, min: number, max: number, step: number, fmt
   return row;
 }
 
-function card(title: string, desc: string, ...children: HTMLElement[]): HTMLElement {
-  const c = h(`<section class="glass rounded-xl2 p-6">
-    <div class="mb-4"><h2 class="text-base font-semibold">${title}</h2><p class="text-xs text-[#7b8291] mt-0.5">${desc}</p></div>
-    <div class="divide-y divide-white/5"></div></section>`);
-  const body = c.querySelector("div.divide-y")!;
-  children.forEach((ch) => body.appendChild(ch));
+// Small inline icons for the category sidebar (Brave-style).
+const ICONS: Record<string, string> = {
+  allgemein: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg>`,
+  design: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21a4 4 0 0 0 0-8 3 3 0 0 1 0-6"/></svg>`,
+  shields: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  tor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>`,
+  suche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`,
+  ai: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.6 2.9L16 19l-4-3.6L8 19l1.1-6.1L4.5 10l5.6-1.4z"/></svg>`,
+  daten: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+};
+
+// Section registry for building the sidebar nav in render order.
+let NAV: { id: string; icon: string; title: string }[] = [];
+
+function section(id: string, title: string, desc: string, ...children: HTMLElement[]): HTMLElement {
+  NAV.push({ id, icon: ICONS[id] || "", title });
+  const c = h(`<section class="st-section" id="sec-${id}" data-title="${title}">
+    <div class="st-sec-head">${ICONS[id] || ""}<div><h2>${title}</h2><p>${desc}</p></div></div>
+    <div class="st-panel"></div></section>`);
+  const body = c.querySelector(".st-panel")!;
+  children.forEach((ch) => { ch.classList.add("st-row"); body.appendChild(ch); });
   return c;
 }
 
@@ -95,6 +111,7 @@ function card(title: string, desc: string, ...children: HTMLElement[]): HTMLElem
 function render() {
   const host = document.getElementById("sections")!;
   host.innerHTML = "";
+  NAV = [];
 
   // Default browser
   const defRow = h(`<div class="flex items-center justify-between py-3">
@@ -110,13 +127,13 @@ function render() {
     defState.textContent = "Wenn Windows fragt, wähle bitte Veil aus.";
     setTimeout(async () => { if (await veil.isDefaultBrowser()) { defBtn.textContent = "Standard ✓"; defBtn.disabled = true; } }, 1500);
   });
-  host.appendChild(card("Allgemein", "Grundeinstellungen für Veil.", defRow));
+  host.appendChild(section("allgemein", "Allgemein", "Grundeinstellungen für Veil.", defRow));
 
   // Privacy
   const level = h(`<div class="py-3"><div class="text-sm mb-2">Shield-Stufe</div></div>`);
   level.appendChild(segmented("shieldLevel", [["aggressive", "Aggressiv"], ["standard", "Standard"], ["off", "Aus"]]));
   host.appendChild(
-    card("Privatsphäre & Shields", "Blockiere Werbung, Tracker und Fingerprinting.",
+    section("shields", "Privatsphäre & Shields", "Blockiere Werbung, Tracker und Fingerprinting.",
       level,
       toggle("blockScripts", "Skript-Blocker", "Blockiert Drittanbieter-Skripte (kann Seiten beeinträchtigen)."),
       toggle("fingerprintProtection", "Schutz vor Fingerprinting", "Randomisiert Canvas & reduziert Geräte-Entropie."),
@@ -148,7 +165,7 @@ function render() {
     update({ torSocksPort: parseInt((e.target as HTMLInputElement).value) || 9050 }).then(rerender);
   });
   host.appendChild(
-    card("Tor-Routing", ".onion-Adressen nativ über das Tor-Netzwerk auflösen. Benötigt einen laufenden Tor-Daemon.",
+    section("tor", "Tor-Routing", ".onion-Adressen nativ über das Tor-Netzwerk auflösen. Benötigt einen laufenden Tor-Daemon.",
       status,
       toggle("torEnabled", "Tor aktivieren", "Routet .onion-Domains über SOCKS5."),
       toggle("routeAllThroughTor", "Gesamten Traffic über Tor", "Auch Clearnet-Seiten über Tor leiten (langsamer)."),
@@ -162,7 +179,7 @@ function render() {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     </span>
     <div><div class="text-sm">Veil Suche</div><div class="text-xs text-[#7b8291] mt-0.5">Werbefrei · integriert · keine Weiterleitung zu Drittanbietern.</div></div></div>`);
-  host.appendChild(card("Suche", "Veil sucht mit der eigenen, werbefreien Suchmaschine.", searchInfo));
+  host.appendChild(section("suche", "Suche", "Veil sucht mit der eigenen, werbefreien Suchmaschine.", searchInfo));
 
   // Veil AI is free and always on — no configuration needed.
   const aiInfo = h(`<div class="flex items-center gap-3 py-3">
@@ -170,7 +187,7 @@ function render() {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.6 2.9L16 19l-4-3.6L8 19l1.1-6.1L4.5 10l5.6-1.4z"/></svg>
     </span>
     <div><div class="text-sm">Veil AI ist aktiv</div><div class="text-xs text-[#7b8291] mt-0.5">Kostenlose KI-Antworten & Chat direkt in der Suche — für jeden, ohne Einrichtung.</div></div></div>`);
-  host.appendChild(card("Veil AI", "Antworten auf Fragen direkt in der Suche.", aiInfo));
+  host.appendChild(section("ai", "Veil AI", "Antworten auf Fragen direkt in der Suche.", aiInfo));
 
   // Appearance — theme (dark/light) switch; accent stays FIXED (Veil purple).
   const themeRow = h(`<div class="py-3"><div class="text-sm mb-2">Erscheinungsbild</div></div>`);
@@ -182,7 +199,7 @@ function render() {
   opacity.appendChild(slider("backgroundOpacity", 0.3, 1, 0.02, (v) => `${Math.round(v * 100)}%`));
   const blur = h(`<div class="py-3"><div class="text-sm mb-1">Blur-Filter</div></div>`);
   blur.appendChild(slider("blur", 0, 40, 1, (v) => `${Math.round(v)}px`));
-  host.appendChild(card("Design", "Hell oder dunkel — Lila bleibt die Akzentfarbe.", themeRow, fixed, opacity, blur));
+  host.appendChild(section("design", "Design", "Hell oder dunkel, Lila bleibt die Akzentfarbe.", themeRow, fixed, opacity, blur));
 
   // Layout & data
   const openHist = h(`<div class="flex items-center justify-between py-3"><div><div class="text-sm">Verlauf</div>
@@ -200,13 +217,67 @@ function render() {
     <button class="glass glass-hover text-sm px-4 py-2 rounded-lg text-[#ff8b9e]">Zurücksetzen</button></div>`);
   reset.querySelector("button")!.addEventListener("click", () => veil.resetStats());
   host.appendChild(
-    card("Verlauf & Daten", "Browserverlauf, Oberfläche und Statistiken.",
+    section("daten", "Verlauf & Daten", "Browserverlauf, Oberfläche und Statistiken.",
       openHist,
       clearHist,
       toggle("sidebarCollapsed", "Seitenleiste eingeklappt", "Blendet die linke Navigationsleiste aus."),
       reset
     )
   );
+
+  buildNav();
+  const q = (document.getElementById("st-search") as HTMLInputElement | null)?.value ?? "";
+  if (q) applySearch(q);
+}
+
+// ---------- Sidebar nav + search ----------
+function buildNav() {
+  const nav = document.getElementById("st-nav")!;
+  nav.innerHTML = "";
+  for (const item of NAV) {
+    const el = h(`<div class="st-nav-item" data-target="sec-${item.id}">${item.icon}<span>${item.title}</span></div>`);
+    el.addEventListener("click", () => {
+      document.getElementById(`sec-${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    nav.appendChild(el);
+  }
+  updateActiveNav();
+}
+
+function updateActiveNav() {
+  const content = document.querySelector<HTMLElement>(".st-content");
+  if (!content) return;
+  const y = content.scrollTop + 120;
+  let currentId = NAV[0]?.id;
+  for (const item of NAV) {
+    const sec = document.getElementById(`sec-${item.id}`);
+    if (sec && sec.offsetTop <= y) currentId = item.id;
+  }
+  document.querySelectorAll<HTMLElement>(".st-nav-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.target === `sec-${currentId}`);
+  });
+}
+
+function applySearch(query: string) {
+  const q = query.trim().toLowerCase();
+  const empty = document.getElementById("st-empty")!;
+  let anyVisible = false;
+  document.querySelectorAll<HTMLElement>(".st-section").forEach((sec) => {
+    const title = (sec.dataset.title || "").toLowerCase();
+    let secVisible = false;
+    sec.querySelectorAll<HTMLElement>(".st-row").forEach((row) => {
+      const match = !q || title.includes(q) || row.textContent!.toLowerCase().includes(q);
+      row.classList.toggle("hidden", !match);
+      if (match) secVisible = true;
+    });
+    sec.style.display = secVisible ? "" : "none";
+    if (secVisible) anyVisible = true;
+  });
+  document.querySelectorAll<HTMLElement>(".st-nav-item").forEach((el) => {
+    const sec = document.getElementById(el.dataset.target!);
+    el.style.display = sec && sec.style.display !== "none" ? "" : "none";
+  });
+  empty.hidden = anyVisible;
 }
 
 async function init() {
@@ -214,6 +285,11 @@ async function init() {
   torState = await veil.torStatus();
   applyThemePreview(s);
   render();
+
+  const search = document.getElementById("st-search") as HTMLInputElement;
+  search.addEventListener("input", () => applySearch(search.value));
+  document.querySelector(".st-content")!.addEventListener("scroll", updateActiveNav, { passive: true });
+
   // Live Tor progress (download → bootstrap → ready) without losing scroll.
   veil.onTorStatus((st) => {
     torState = st;

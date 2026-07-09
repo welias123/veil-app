@@ -1,6 +1,6 @@
 {
   "name": "veil-browser",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Veil — a modern, privacy-first desktop browser with native Tor routing and built-in shields.",
   "author": "Veil",
   "license": "MIT",
@@ -54,8 +54,18 @@
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "zip", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.ico",
       "signingHashAlgorithms": null,
@@ -65,7 +75,12 @@
     },
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["universal"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "icon": "build/icon.png",
       "identity": null,

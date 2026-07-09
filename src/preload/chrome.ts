@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import {
-  IPC, AiMessage, AiReply, BookmarkItem, ChromeLayout, DownloadItem, HistoryEntry, NewsResult, OmniItem, OverlayContext, OverlayKind, SearchKind, SearchResult, Settings, StagedUpdateInfo, Stats, TabState, TorRuntimeStatus, UpdateInfo, UpdateProgress, VideoResult,
+  IPC, AiMessage, AiReply, BookmarkItem, ChromeLayout, DownloadItem, HistoryEntry, NewsResult, OmniItem, OverlayContext, OverlayKind, SearchKind, SearchResult, Settings, StagedUpdateInfo, Stats, TabState, TorRuntimeStatus, UpdateInfo, UpdateProgress, VideoResult, WelcomeContent,
 } from "../shared/types";
 
 /**
@@ -81,6 +81,7 @@ export function exposeVeilApi() {
   applyUpdate: (): Promise<boolean> => ipcRenderer.invoke(IPC.updateApply),
   onUpdateProgress: (cb: (p: UpdateProgress) => void) =>
     ipcRenderer.on(IPC.updateProgress, (_e, p) => cb(p)),
+  getWelcome: (): Promise<WelcomeContent> => ipcRenderer.invoke(IPC.welcomeGet),
   platform: process.platform,
 
   // History
@@ -126,6 +127,8 @@ export function exposeVeilApi() {
   onSettings: (cb: (settings: Settings) => void) =>
     ipcRenderer.on(IPC.settingsUpdated, (_e, s) => cb(s)),
   openSettings: (cb: () => void) => ipcRenderer.on(IPC.openSettings, () => cb()),
+  onShortcut: (cb: (s: { key: string; control: boolean; shift: boolean; alt: boolean }) => void) =>
+    ipcRenderer.on(IPC.shortcut, (_e, s) => cb(s)),
   };
 
   contextBridge.exposeInMainWorld("veil", api);

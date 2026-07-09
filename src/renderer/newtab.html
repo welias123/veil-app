@@ -4,93 +4,124 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil:;"
+      content="default-src 'self' veil:; style-src 'self' 'unsafe-inline'; img-src 'self' data: veil: https://icons.duckduckgo.com;"
     />
     <title>Neuer Tab</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
+      /* Brave-style new tab: top-site tiles, centered search, compact stats card. */
       body { overflow-y: auto; }
+      body.page-canvas { background: #0b0d12; }
+      body.page-canvas::before {
+        background:
+          radial-gradient(1000px 620px at 50% -8%, rgba(124,108,255,0.14), transparent 62%),
+          radial-gradient(760px 520px at 88% 108%, rgba(124,108,255,0.08), transparent 60%);
+      }
+      html.theme-light body.page-canvas { background: #eef0f5; }
+
+      .nt { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+      .nt-top { display: flex; align-items: center; justify-content: space-between; padding: 22px 30px 0; }
+      .nt-brand { display: flex; align-items: center; gap: 10px; }
+      .nt-brand img { width: 26px; height: 26px; border-radius: 8px; }
+      .nt-brand span { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+      .nt-shield {
+        font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 999px;
+        color: var(--veil-accent); background: var(--veil-accent-soft);
+      }
+
+      /* Center stack */
+      .nt-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 40px 24px 120px; }
+      #clock { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: #eceef3; }
+      html.theme-light #clock { color: #16181f; }
+      #greeting { text-align: center; font-size: 13px; color: #8b93a3; margin-top: 6px; }
+
+      /* Top-site tiles */
+      .nt-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
+      .tile {
+        width: 96px; display: flex; flex-direction: column; align-items: center; gap: 9px;
+        padding: 14px 6px 12px; border-radius: 16px; cursor: pointer;
+        transition: background 0.14s ease, transform 0.12s ease;
+      }
+      .tile:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+      html.theme-light .tile:hover { background: rgba(0,0,0,0.05); }
+      .tile .ic {
+        width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center;
+        background: rgba(255,255,255,0.07); overflow: hidden;
+        font-weight: 700; font-size: 22px; color: #fff;
+      }
+      html.theme-light .tile .ic { background: rgba(0,0,0,0.06); }
+      .tile .ic img { width: 30px; height: 30px; }
+      .tile .lbl { font-size: 12px; color: #b9bec9; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      html.theme-light .tile .lbl { color: #4b5060; }
+
+      /* Search pill */
+      .nt-search {
+        width: min(620px, 92vw); display: flex; align-items: center; gap: 13px;
+        height: 56px; padding: 0 22px; border-radius: 999px;
+        background: rgba(18,20,28,0.82); border: 1px solid rgba(255,255,255,0.09);
+        box-shadow: 0 10px 40px -12px rgba(0,0,0,0.6);
+        transition: border-color 0.16s ease, box-shadow 0.16s ease;
+      }
+      html.theme-light .nt-search { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.1); }
+      .nt-search:focus-within { border-color: var(--veil-accent); box-shadow: 0 0 0 3px var(--veil-accent-soft), 0 10px 40px -12px rgba(0,0,0,0.6); }
+      .nt-search img.b { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; }
+      .nt-search input { flex: 1; background: transparent; outline: none; border: none; color: inherit; font-size: 15px; }
+      .nt-search input::placeholder { color: #6b7280; }
+
+      /* Compact stats card, bottom-left (Brave style) */
+      .nt-stats {
+        position: fixed; left: 26px; bottom: 26px; z-index: 2;
+        background: rgba(16,18,26,0.72); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px; padding: 16px 20px; backdrop-filter: blur(14px);
+        display: flex; flex-direction: column; gap: 12px; min-width: 300px;
+      }
+      html.theme-light .nt-stats { background: rgba(255,255,255,0.82); border-color: rgba(0,0,0,0.08); }
+      .nt-stats h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #8b93a3; }
+      .nt-stats .row { display: flex; gap: 26px; }
+      .nt-stats .cell .v { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: #eceef3; }
+      html.theme-light .nt-stats .cell .v { color: #16181f; }
+      .nt-stats .cell .v .u { font-size: 13px; font-weight: 600; color: var(--veil-accent); margin-left: 3px; }
+      .nt-stats .cell .l { font-size: 11px; color: #8b93a3; margin-top: 2px; }
+
+      @media (max-width: 640px) {
+        .nt-stats { left: 12px; right: 12px; bottom: 12px; min-width: 0; }
+        .nt-stats .row { justify-content: space-between; gap: 10px; }
+      }
     </style>
   </head>
-  <body class="page-canvas min-h-screen">
-    <!-- Brand, top-left (like Brave) -->
-    <div class="fixed top-6 left-8 flex items-center gap-2.5 select-none z-10">
-      <img src="icon.svg" alt="Veil" width="28" height="28" class="rounded-lg shadow-glass-sm" />
-      <span class="text-base font-semibold tracking-tight">Veil</span>
+  <body class="page-canvas">
+    <div class="nt">
+      <div class="nt-top">
+        <div class="nt-brand"><img src="icon.svg" alt="Veil" /> <span>Veil</span></div>
+        <span id="shieldState" class="nt-shield">Shields aktiv</span>
+      </div>
+
+      <div class="nt-center">
+        <div style="text-align:center">
+          <div id="clock">--:--</div>
+          <div id="greeting"></div>
+        </div>
+
+        <div id="tiles" class="nt-tiles"></div>
+
+        <div class="nt-search accent-ring">
+          <img class="b" src="icon.svg" alt="" />
+          <input id="search" type="text" spellcheck="false" autocomplete="off" placeholder="Privat suchen mit Veil" />
+          <svg style="color:#6b7280;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+      </div>
     </div>
 
-    <main class="relative max-w-5xl mx-auto px-8 py-16 flex flex-col items-center">
-      <!-- Hero: Veil brand + clock -->
-      <div class="w-full flex flex-col items-center text-center mb-8">
-        <img src="icon.svg" alt="Veil" width="60" height="60" class="rounded-2xl mb-6 opacity-95" />
-        <div id="clock" class="text-5xl font-medium tracking-tight tabular-nums text-[#eceef3]">--:--</div>
-        <div id="greeting" class="mt-2 text-[#7b8291] text-sm"></div>
+    <!-- Compact privacy stats, bottom-left -->
+    <div class="nt-stats">
+      <h3>Statistiken</h3>
+      <div class="row">
+        <div class="cell"><div class="v"><span id="blockedValue">0</span></div><div class="l">Tracker &amp; Werbung blockiert</div></div>
+        <div class="cell"><div class="v"><span id="bwValue">0</span><span id="bwUnit" class="u">MB</span></div><div class="l">Bandbreite gespart</div></div>
+        <div class="cell"><div class="v"><span id="timeValue">0</span><span id="timeUnit" class="u">Min</span></div><div class="l">Zeit gespart</div></div>
       </div>
-
-      <!-- Search -->
-      <div class="w-full max-w-2xl mb-14">
-        <div class="accent-ring glass glass-hover flex items-center gap-3 h-14 rounded-2xl px-5 shadow-glass">
-          <svg class="text-[#6b7280] shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input id="search" type="text" spellcheck="false" autocomplete="off"
-            placeholder="Privat suchen mit Veil…"
-            class="flex-1 bg-transparent outline-none text-base placeholder:text-[#6b7280]" />
-          <kbd class="text-[10px] text-[#6b7280] border border-white/10 rounded px-1.5 py-0.5">↵</kbd>
-        </div>
-      </div>
-
-      <!-- Analytics -->
-      <section class="w-full">
-        <div class="flex items-center justify-between mb-4 px-1">
-          <div>
-            <h2 class="text-sm font-semibold text-[#e7e9ef]">Deine Privatsphäre</h2>
-            <p class="text-xs text-[#7b8291]">Seit der Installation von Veil geschützt</p>
-          </div>
-          <span id="shieldState" class="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-            style="background: var(--veil-accent-soft); color: var(--veil-accent)">Shields aktiv</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <!-- Card 1: blocked -->
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-4">
-              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: var(--veil-accent-soft); color: var(--veil-accent)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              </span>
-            </div>
-            <div id="blockedValue" class="text-3xl font-bold tabular-nums tracking-tight">0</div>
-            <div class="mt-1 text-sm text-[#9aa0ad]">Tracker &amp; Werbung blockiert</div>
-          </div>
-
-          <!-- Card 2: bandwidth -->
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-4">
-              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: rgba(51,214,196,0.14); color: #33d6c4">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-              </span>
-            </div>
-            <div class="flex items-baseline gap-1">
-              <span id="bwValue" class="text-3xl font-bold tabular-nums tracking-tight">0</span>
-              <span id="bwUnit" class="text-lg font-semibold text-[#9aa0ad]">MB</span>
-            </div>
-            <div class="mt-1 text-sm text-[#9aa0ad]">Bandbreite gespart</div>
-          </div>
-
-          <!-- Card 3: time -->
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-4">
-              <span class="grid place-items-center h-10 w-10 rounded-xl" style="background: rgba(240,163,62,0.14); color: #f0a33e">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-              </span>
-            </div>
-            <div class="flex items-baseline gap-1">
-              <span id="timeValue" class="text-3xl font-bold tabular-nums tracking-tight">0</span>
-              <span id="timeUnit" class="text-lg font-semibold text-[#9aa0ad]">Min</span>
-            </div>
-            <div class="mt-1 text-sm text-[#9aa0ad]">Zeit gespart</div>
-          </div>
-        </div>
-      </section>
-    </main>
+    </div>
 
     <script src="newtab.js"></script>
   </body>

@@ -1,7 +1,7 @@
 import { BrowserWindow, WebContentsView, Session } from "electron";
 import { EventEmitter } from "node:events";
 import path from "node:path";
-import { ChromeLayout, TabState } from "../shared/types";
+import { ChromeLayout, IPC, TabState } from "../shared/types";
 import { store } from "./settings";
 import { isOnion, checkTor } from "./proxy";
 import { history } from "./history";
@@ -20,6 +20,16 @@ export const INTERNAL = {
 
 function isInternal(url: string): boolean {
   return url.startsWith("veil://");
+}
+
+/** The set of keyboard chords Veil owns (forwarded from page views to the UI). */
+function isVeilShortcut(input: Electron.Input): boolean {
+  const mod = input.control || input.meta;
+  const k = input.key.toLowerCase();
+  if (input.alt && (input.key === "ArrowLeft" || input.key === "ArrowRight")) return true;
+  if (!mod) return false;
+  if (input.shift) return k === "t" || k === "n"; // restore tab, new private window
+  return ["t", "w", "r", "l", ",", "j", "h", "d", "+", "=", "-", "0"].includes(k);
 }
 
 /** Turn an omnibox input into a navigable URL (search vs. address vs. onion). */
@@ -168,6 +178,22 @@ export class TabManager extends EventEmitter {
         wc.loadURL(INTERNAL.torError);
       } else {
         wc.loadURL(`${INTERNAL.connecting}?u=${encodeURIComponent(validatedURL)}`);
+      }
+    });
+
+    // Shortcuts must work even while a web page holds focus: catch Veil's chord
+    // keys here (on the page view) and forward them to the chrome UI, which owns
+    // the shortcut logic. Any non-Veil key passes straight through to the page.
+    wc.on("before-input-event", (event, input) => {
+      if (input.type !== "keyDown") return;
+      if (isVeilShortcut(input)) {
+        event.preventDefault();
+        this.win.webContents.send(IPC.shortcut, {
+          key: input.key,
+          control: input.control || input.meta,
+          shift: input.shift,
+          alt: input.alt,
+        });
       }
     });
   }

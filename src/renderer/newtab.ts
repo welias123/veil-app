@@ -1,10 +1,11 @@
-import { Settings, Stats } from "../shared/types";
+import { HistoryEntry, Settings, Stats } from "../shared/types";
 
 interface Veil {
   getSettings(): Promise<Settings>;
   getStats(): Promise<Stats>;
   onStats(cb: (s: Stats) => void): void;
   onSettings(cb: (s: Settings) => void): void;
+  getHistory(): Promise<HistoryEntry[]>;
 }
 const veil = (window as any).veil as Veil;
 const $ = (id: string) => document.getElementById(id)!;
@@ -85,9 +86,57 @@ function resolveQuery(input: string): string {
   return `veil://search?q=${encodeURIComponent(raw)}`;
 }
 
+// ---------- Top-site tiles (from history, aggregated by host) ----------
+function hostOf(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+}
+function labelFor(host: string): string {
+  const core = host.split(".").slice(0, -1).join(".") || host;
+  return core.charAt(0).toUpperCase() + core.slice(1);
+}
+async function renderTopSites() {
+  const el = document.getElementById("tiles");
+  if (!el) return;
+  let hist: HistoryEntry[] = [];
+  try { hist = await veil.getHistory(); } catch { return; }
+
+  // Count visits per host, ignoring internal pages; keep the shortest URL seen.
+  const map = new Map<string, { count: number; url: string }>();
+  for (const h of hist) {
+    if (!/^https?:/i.test(h.url)) continue;
+    const host = hostOf(h.url);
+    if (!host) continue;
+    const cur = map.get(host);
+    if (cur) cur.count++;
+    else map.set(host, { count: 1, url: `https://${host}/` });
+  }
+  const top = [...map.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 12);
+  if (!top.length) return;
+
+  el.innerHTML = "";
+  for (const [host, info] of top) {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    const initial = host.charAt(0).toUpperCase();
+    tile.innerHTML =
+      `<span class="ic"><img src="https://icons.duckduckgo.com/ip3/${host}.ico" alt="" /></span>` +
+      `<span class="lbl">${labelFor(host)}</span>`;
+    const img = tile.querySelector("img")!;
+    img.addEventListener("error", () => {
+      const ic = tile.querySelector(".ic") as HTMLElement;
+      ic.textContent = initial;
+      ic.style.background = "var(--veil-accent-soft)";
+      ic.style.color = "var(--veil-accent)";
+    });
+    tile.addEventListener("click", () => { window.location.href = info.url; });
+    el.appendChild(tile);
+  }
+}
+
 async function init() {
   tickClock();
   setInterval(tickClock, 15_000);
+  renderTopSites();
 
   settings = await veil.getSettings();
   document.documentElement.classList.toggle("theme-light", settings.theme === "light");

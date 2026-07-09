@@ -68,7 +68,17 @@ export interface ChromeLayout {
   bottom: number;
 }
 
-export type OverlayKind = "shields" | "menu" | "downloads" | "update";
+export type OverlayKind = "shields" | "menu" | "downloads" | "update" | "welcome";
+
+export interface WelcomeContent {
+  title: string;
+  message: string;
+  ok: string;
+  // Step 2: "set as default browser?" prompt.
+  defaultPrompt: string;
+  yes: string;
+  no: string;
+}
 
 export interface UpdateInfo {
   version: string;
@@ -272,9 +282,11 @@ export const IPC = {
   updateApply: "update:apply", // swap files + restart
   updateStaged: "update:staged", // query staged (downloaded) version
   updateProgress: "update:progress", // main -> renderer: live download progress
+  welcomeGet: "welcome:get", // localized first-run welcome content
   // main -> renderer (send)
   tabsUpdated: "tabs:updated",
   statsUpdated: "stats:updated",
   settingsUpdated: "settings:updated",
   openSettings: "ui:open-settings",
+  shortcut: "ui:shortcut", // main -> chrome: a Veil shortcut caught on a page view
 } as const;

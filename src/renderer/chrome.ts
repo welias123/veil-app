@@ -33,6 +33,7 @@ interface Veil {
   onStats(cb: (stats: Stats) => void): void;
   onSettings(cb: (s: Settings) => void): void;
   onDownloads(cb: (list: DownloadItem[]) => void): void;
+  onShortcut(cb: (s: { key: string; control: boolean; shift: boolean; alt: boolean }) => void): void;
 }
 const veil = (window as any).veil as Veil;
 
@@ -314,26 +315,31 @@ function wire() {
   $("downloadBtn").onclick = () => openPanel("downloads", "downloadBtn");
   $("starBtn").onclick = () => toggleCurrentBookmark();
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts. Handled both here (chrome UI focused) and forwarded from
+  // main when a web page has focus (veil.onShortcut) — same logic either way.
+  function runShortcut(mod: boolean, shift: boolean, alt: boolean, key: string): boolean {
+    const k = key.toLowerCase();
+    if (mod && shift && k === "t") veil.restoreTab();
+    else if (mod && k === "t") veil.createTab();
+    else if (mod && k === "w") activeTab() && veil.closeTab(activeTab()!.id);
+    else if (mod && k === "r") veil.reload();
+    else if (mod && k === "l") $<HTMLInputElement>("address").focus();
+    else if (mod && k === ",") veil.createTab("veil://settings");
+    else if (mod && k === "j") openPanel("downloads", "downloadBtn");
+    else if (mod && k === "h") veil.createTab("veil://history");
+    else if (mod && k === "d") toggleCurrentBookmark();
+    else if (mod && (k === "+" || k === "=")) veil.zoom("in");
+    else if (mod && k === "-") veil.zoom("out");
+    else if (mod && k === "0") veil.zoom("reset");
+    else if (alt && key === "ArrowLeft") veil.back();
+    else if (alt && key === "ArrowRight") veil.forward();
+    else return false;
+    return true;
+  }
   window.addEventListener("keydown", (e) => {
-    const mod = e.ctrlKey || e.metaKey;
-    if (mod && e.shiftKey && (e.key === "T" || e.key === "t")) veil.restoreTab();
-    else if (mod && e.key === "t") veil.createTab();
-    else if (mod && e.key === "w") activeTab() && veil.closeTab(activeTab()!.id);
-    else if (mod && e.key === "r") veil.reload();
-    else if (mod && e.key === "l") $<HTMLInputElement>("address").focus();
-    else if (mod && e.key === ",") veil.createTab("veil://settings");
-    else if (mod && e.key === "j") openPanel("downloads", "downloadBtn");
-    else if (mod && e.key === "h") veil.createTab("veil://history");
-    else if (mod && e.key === "d") toggleCurrentBookmark();
-    else if (mod && (e.key === "+" || e.key === "=")) veil.zoom("in");
-    else if (mod && e.key === "-") veil.zoom("out");
-    else if (mod && e.key === "0") veil.zoom("reset");
-    else if (e.altKey && e.key === "ArrowLeft") veil.back();
-    else if (e.altKey && e.key === "ArrowRight") veil.forward();
-    else return;
-    e.preventDefault();
+    if (runShortcut(e.ctrlKey || e.metaKey, e.shiftKey, e.altKey, e.key)) e.preventDefault();
   });
+  veil.onShortcut((s) => runShortcut(s.control, s.shift, s.alt, s.key));
 
   new ResizeObserver(reportLayout).observe($("toolbar"));
   new ResizeObserver(reportLayout).observe($("sidebar"));

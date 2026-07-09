@@ -9,7 +9,7 @@ import { registerIpc, OverlayCtl } from "./ipc";
 import { setupDownloads, onDownloadsUpdate } from "./downloads";
 import { tor } from "./tor";
 import { checkForUpdate, onUpdateProgress, autoDownloadUpdate, applyStagedOnStartup } from "./update";
-import { maybeShowWelcome } from "./welcome";
+import { shouldShowWelcome } from "./welcome";
 import { IPC, OverlayKind } from "../shared/types";
 
 const RENDERER_DIR = path.join(__dirname, "../renderer");
@@ -266,8 +266,13 @@ app.whenReady().then(async () => {
   // First tab.
   tabs.create(process.env.VEIL_DEBUG_URL || undefined);
 
-  // First-run localized welcome (+ macOS manual-update warning).
-  maybeShowWelcome(win);
+  // First-run localized welcome (+ macOS manual-update warning) as an in-app
+  // glass modal in the overlay — shown once the chrome UI has painted.
+  if (shouldShowWelcome()) {
+    const showWelcome = () => setTimeout(() => overlay.show("welcome", 0), 700);
+    if (win.webContents.isLoading()) win.webContents.once("did-finish-load", showWelcome);
+    else showWelcome();
+  }
 
   // Check for a newer version, notify the UI (badge/modal), and — in the packaged
   // Windows build — start downloading it in the background so the next launch

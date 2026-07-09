@@ -1,4 +1,5 @@
-import { app, dialog, BrowserWindow } from "electron";
+import { app } from "electron";
+import { WelcomeContent } from "../shared/types";
 import { meta } from "./meta";
 
 /**
@@ -12,6 +13,10 @@ interface Strings {
   body: string;
   macNote: string; // appended only on macOS
   ok: string;
+  // Step 2 (optional per language; falls back to English).
+  defaultPrompt?: string;
+  yes?: string;
+  no?: string;
 }
 
 const L: Record<string, Strings> = {
@@ -20,14 +25,20 @@ const L: Record<string, Strings> = {
     body: "Danke, dass du Veil installiert hast — dein privater Browser mit eingebauten Shields und Tor. Viel Spaß!",
     macNote:
       "\n\nHinweis für macOS: Neue Updates musst du jedes Mal selbst von der Website herunterladen. Du bekommst keine automatische Update-Meldung wie auf anderen Geräten.",
-    ok: "Los geht's",
+    ok: "Akzeptieren",
+    defaultPrompt: "Möchtest du Veil als deinen Standardbrowser verwenden?",
+    yes: "Ja",
+    no: "Nein",
   },
   en: {
     title: "Welcome to Veil",
     body: "Thanks for installing Veil — your private browser with built-in shields and Tor. Enjoy!",
     macNote:
       "\n\nNote for macOS: you'll need to download each new update manually from the website. You won't get an automatic update prompt like on other devices.",
-    ok: "Get started",
+    ok: "Accept",
+    defaultPrompt: "Would you like to set Veil as your default browser?",
+    yes: "Yes",
+    no: "No",
   },
   fr: {
     title: "Bienvenue sur Veil",
@@ -92,25 +103,29 @@ function strings(): Strings {
   return L[lang] || L.en;
 }
 
-export function maybeShowWelcome(win: BrowserWindow) {
-  if (meta.get("launchedBefore")) return;
+/**
+ * Whether to show the first-run welcome now. Sets the once-flag as a side effect.
+ * Debug/preview: VEIL_FORCE_WELCOME=1 shows it every launch (ignores the flag).
+ */
+export function shouldShowWelcome(): boolean {
+  if (process.env.VEIL_FORCE_WELCOME) return true;
+  if (meta.get("launchedBefore")) return false;
   meta.set("launchedBefore", true);
   meta.set("welcomedVersion", app.getVersion());
+  return true;
+}
 
+/** Localized welcome content for the in-app modal (macOS variant adds the note). */
+export function getWelcomeContent(): WelcomeContent {
   const s = strings();
-  const isMac = process.platform === "darwin";
-  const message = s.body + (isMac ? s.macNote : "");
-
-  // Slight delay so the window is painted before the modal appears.
-  setTimeout(() => {
-    dialog.showMessageBox(win, {
-      type: "info",
-      title: s.title,
-      message: s.title,
-      detail: message,
-      buttons: [s.ok],
-      defaultId: 0,
-      noLink: true,
-    });
-  }, 900);
+  // VEIL_WELCOME_MAC=1 forces the macOS variant so it can be previewed on Windows.
+  const isMac = process.platform === "darwin" || !!process.env.VEIL_WELCOME_MAC;
+  return {
+    title: s.title,
+    message: s.body + (isMac ? s.macNote : ""),
+    ok: s.ok,
+    defaultPrompt: s.defaultPrompt ?? L.en.defaultPrompt!,
+    yes: s.yes ?? L.en.yes!,
+    no: s.no ?? L.en.no!,
+  };
 }

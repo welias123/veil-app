@@ -89,7 +89,16 @@ function clearStaged() {
  * Download the update ZIP with live progress, extract it and stage the files.
  * Resolves with the staged version; rejects on failure. Windows only.
  */
-export async function downloadUpdate(): Promise<string> {
+let inFlight: Promise<string> | null = null;
+export function downloadUpdate(): Promise<string> {
+  // Dedup: the background auto-download and a manual click share one download.
+  if (!inFlight) {
+    inFlight = doDownloadUpdate().finally(() => { inFlight = null; });
+  }
+  return inFlight;
+}
+
+async function doDownloadUpdate(): Promise<string> {
   if (process.platform !== "win32") throw new Error("In-App-Update nur unter Windows");
   const info = cached;
   if (!info) throw new Error("Kein Update verfügbar");
@@ -97,7 +106,7 @@ export async function downloadUpdate(): Promise<string> {
   const zipUrl =
     info.url && info.url.endsWith(".zip")
       ? info.url
-      : "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip";
+      : "https://github.com/welias123/veil-website/releases/latest/download/Veil-Windows.zip";
 
   const root = path.join(os.tmpdir(), "veil-update");
   const extractDir = path.join(root, "extracted");

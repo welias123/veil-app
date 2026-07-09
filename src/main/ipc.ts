@@ -27,6 +27,7 @@ export interface OverlayCtl {
 }
 
 import { getUpdate, downloadUpdate, applyUpdate, getStagedUpdate } from "./update";
+import { getWelcomeContent } from "./welcome";
 
 export function registerIpc(win: BrowserWindow, tabs: TabManager, ses: Session, overlay: OverlayCtl) {
   const send = (channel: string, payload: unknown) => {
@@ -141,6 +142,9 @@ export function registerIpc(win: BrowserWindow, tabs: TabManager, ses: Session, 
     }
   });
   ipcMain.handle(IPC.updateApply, () => applyUpdate());
+
+  // ---- Welcome (first-run) ----
+  ipcMain.handle(IPC.welcomeGet, () => getWelcomeContent());
 
   // ---- Default browser ----
   ipcMain.handle(IPC.setDefaultBrowser, () => {

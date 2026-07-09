@@ -1,4 +1,4 @@
-import { DownloadItem, OmniItem, OverlayContext, Settings, StagedUpdateInfo, Stats, UpdateInfo, UpdateProgress } from "../shared/types";
+import { DownloadItem, OmniItem, OverlayContext, Settings, StagedUpdateInfo, Stats, UpdateInfo, UpdateProgress, WelcomeContent } from "../shared/types";
 
 /** Floating panel layer (shields + menu + downloads). Rendered in its own
  *  always-on-top WebContentsView so it is never occluded by the native tab view. */
@@ -34,6 +34,8 @@ interface Veil {
   onUpdateProgress(cb: (p: UpdateProgress) => void): void;
   downloadUrl(url: string): Promise<void>;
   translatePage(): Promise<void>;
+  getWelcome(): Promise<WelcomeContent>;
+  setDefaultBrowser(): Promise<boolean>;
   platform: string;
 }
 const veil = (window as any).veil as Veil;
@@ -296,13 +298,14 @@ function render() {
   $("scrim").style.background = "";
   const panel = $("panel");
   panel.innerHTML = "";
-  if (ctx.kind === "update") {
+  if (ctx.kind === "update" || ctx.kind === "welcome") {
     // Centered modal.
     panel.style.right = "";
     panel.style.left = "50%";
     panel.style.top = "50%";
     panel.style.transform = "translate(-50%, -50%)";
-    renderUpdate(panel);
+    if (ctx.kind === "welcome") renderWelcome(panel);
+    else renderUpdate(panel);
     return;
   }
   panel.style.left = "";
@@ -410,6 +413,37 @@ function startUpdateDownload() {
     up.error = (e && e.message) || "Download fehlgeschlagen";
     if (ctx?.kind === "update") render();
   });
+}
+
+// Welcome is a 2-step flow: intro (+mac warning) → "set as default browser?".
+let welcomeStep: "intro" | "default" = "intro";
+let welcomeData: WelcomeContent | null = null;
+
+async function renderWelcome(panel: HTMLElement) {
+  if (!welcomeData) welcomeData = await veil.getWelcome();
+  const w = welcomeData;
+  const shield = `<div class="mx-auto mb-4 grid place-items-center h-16 w-16 rounded-2xl" style="background:var(--veil-accent-soft);color:var(--veil-accent)">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z"/><path d="M9.2 12.5 12 9.7l2.8 2.8"/></svg></div>`;
+  const card = h(`<div class="glass rounded-xl2 shadow-glass w-[26rem] p-7 text-center animate-pop"></div>`);
+
+  if (welcomeStep === "intro") {
+    card.innerHTML = `${shield}
+      <div class="text-xl font-semibold mb-2">${escapeHtml(w.title)}</div>
+      <p class="text-sm text-[#9aa0ad] mb-6 leading-relaxed" style="white-space:pre-line">${escapeHtml(w.message)}</p>
+      <button id="wc-ok" class="w-full text-sm py-3 rounded-xl font-medium" style="background:var(--veil-accent);color:#fff">${escapeHtml(w.ok)}</button>`;
+    card.querySelector("#wc-ok")!.addEventListener("click", () => { welcomeStep = "default"; render(); });
+  } else {
+    card.innerHTML = `${shield}
+      <div class="text-xl font-semibold mb-2">${escapeHtml(w.title)}</div>
+      <p class="text-sm text-[#9aa0ad] mb-6 leading-relaxed">${escapeHtml(w.defaultPrompt)}</p>
+      <div class="flex gap-2">
+        <button id="wc-no" class="flex-1 glass glass-hover text-sm py-3 rounded-xl">${escapeHtml(w.no)}</button>
+        <button id="wc-yes" class="flex-1 text-sm py-3 rounded-xl font-medium" style="background:var(--veil-accent);color:#fff">${escapeHtml(w.yes)}</button>
+      </div>`;
+    card.querySelector("#wc-no")!.addEventListener("click", close);
+    card.querySelector("#wc-yes")!.addEventListener("click", async () => { await veil.setDefaultBrowser(); close(); });
+  }
+  panel.appendChild(card);
 }
 
 // ---------- Omnibox suggestion list ----------

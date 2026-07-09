@@ -1,4 +1,4 @@
-import { HistoryEntry, Settings, Stats } from "../shared/types";
+import { HistoryEntry, SEARCH_ENGINES, Settings, Stats } from "../shared/types";
 
 interface Veil {
   getSettings(): Promise<Settings>;
@@ -82,7 +82,11 @@ function resolveQuery(input: string): string {
   const raw = input.trim();
   if (/^[a-z]+:\/\//i.test(raw)) return raw;
   if (/^[^\s]+\.[^\s]+$/.test(raw)) return (raw.endsWith(".onion") ? "http://" : "https://") + raw;
-  // Search with Veil's own engine.
+  // Search: built-in Veil search, or the chosen external engine.
+  if (settings && !settings.useVeilSearch) {
+    const eng = SEARCH_ENGINES[settings.searchEngine] || SEARCH_ENGINES.duckduckgo;
+    return eng.url.replace("%s", encodeURIComponent(raw));
+  }
   return `veil://search?q=${encodeURIComponent(raw)}`;
 }
 
@@ -141,6 +145,11 @@ async function init() {
   settings = await veil.getSettings();
   document.documentElement.classList.toggle("theme-light", settings.theme === "light");
   $("shieldState").textContent = settings.shieldLevel === "off" ? "Shields aus" : "Shields aktiv";
+
+  // New-tab visibility toggles.
+  if (!settings.newtabShowClock) $("clock").parentElement!.style.display = "none";
+  if (!settings.newtabShowTopSites) { const t = document.getElementById("tiles"); if (t) t.style.display = "none"; }
+  if (!settings.newtabShowStats) { const st = document.querySelector<HTMLElement>(".nt-stats"); if (st) st.style.display = "none"; }
 
   renderStats(await veil.getStats());
   veil.onStats(renderStats);

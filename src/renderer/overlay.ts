@@ -142,26 +142,64 @@ function toggleRow(key: keyof Settings, label: string): HTMLElement {
 }
 
 // ---------- Menu panel ----------
+const MENU_ICONS: Record<string, string> = {
+  tab: `<path d="M12 5v14M5 12h14"/>`,
+  reload: `<path d="M23 4v6h-6M1 20v-6h6"/><path d="M20.5 9A9 9 0 0 0 5.6 5.6L1 10m22 4l-4.6 4.4A9 9 0 0 1 3.5 15"/>`,
+  downloads: `<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>`,
+  history: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+  bookmark: `<path d="M6 3h12v18l-6-4-6 4z"/>`,
+  translate: `<path d="M4 5h9M9 3v2c0 5-3 9-6 10M6 9c0 3 3 5 7 6"/><path d="M14 20l4-9 4 9M15.5 17h5"/>`,
+  print: `<path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/>`,
+  fullscreen: `<path d="M8 3H3v5M21 8V3h-5M16 21h5v-5M3 16v5h5"/>`,
+  trash: `<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>`,
+  sidebar: `<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>`,
+  gear: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 13.4H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 4.6V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1A1.6 1.6 0 0 0 21 10.6h.1a2 2 0 1 1 0 4H21a1.6 1.6 0 0 0-1.6.9z"/>`,
+  reset: `<path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5"/>`,
+  power: `<path d="M12 3v9M6.6 6.6a9 9 0 1 0 10.8 0"/>`,
+};
+function svg(key: string): string {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${MENU_ICONS[key] || ""}</svg>`;
+}
+
 function renderMenu(): HTMLElement {
-  const p = h(`<div class="glass rounded-xl2 shadow-glass w-64 p-1.5"></div>`);
-  const item = (label: string, shortcut: string, fn: () => void, danger = false) => {
-    const el = h(`<button class="w-full flex items-center justify-between text-left text-sm px-3 py-2 rounded-lg hover:bg-white/5 ${danger ? "text-[#ff8b9e]" : "text-[#d6dae2]"}">
-      <span>${label}</span><span class="text-[10px] text-[#5b6473]">${shortcut}</span></button>`);
+  const p = h(`<div class="glass rounded-xl2 shadow-glass w-[19rem] p-2 overflow-hidden"></div>`);
+
+  // Header: Veil brand + version
+  const shieldTxt = settings.shieldLevel === "off" ? "Shields aus" : "Shields aktiv";
+  p.appendChild(h(`<div class="flex items-center gap-2.5 px-2.5 pt-1 pb-2.5">
+    <img src="icon.svg" alt="Veil" style="width:26px;height:26px;border-radius:8px" />
+    <div class="leading-tight"><div class="text-sm font-semibold">Veil</div>
+      <div class="text-[10px] text-[#7b8291]">${shieldTxt}</div></div>
+  </div>`));
+
+  const item = (icon: string, label: string, shortcut: string, fn: () => void, danger = false) => {
+    const el = h(`<button class="w-full flex items-center gap-3 text-left text-[13.5px] px-2.5 py-2 rounded-lg hover:bg-white/6 ${danger ? "text-[#ff8b9e]" : "text-[#d6dae2]"}">
+      <span class="shrink-0 ${danger ? "text-[#ff8b9e]" : "text-[#9aa0ad]"}">${svg(icon)}</span>
+      <span class="flex-1">${label}</span><span class="text-[10px] text-[#5b6473]">${shortcut}</span></button>`);
     el.addEventListener("click", fn);
     return el;
   };
-  const sep = () => h(`<div class="my-1 border-t border-white/5"></div>`);
+  const sep = () => h(`<div class="my-1.5 border-t border-white/6"></div>`);
 
-  p.appendChild(item("Neuer Tab", "Strg+T", () => { veil.createTab(); close(); }));
-  p.appendChild(item("Neu laden", "Strg+R", () => { veil.reload(); close(); }));
+  // Quick actions: New tab + reload as two split buttons
+  const quick = h(`<div class="grid grid-cols-2 gap-1.5 px-0.5 pb-1"></div>`);
+  const qbtn = (icon: string, label: string, fn: () => void) => {
+    const b = h(`<button class="flex items-center justify-center gap-2 text-[13px] py-2 rounded-lg glass glass-hover text-[#d6dae2]">
+      <span class="text-[#9aa0ad]">${svg(icon)}</span>${label}</button>`);
+    b.addEventListener("click", fn);
+    return b;
+  };
+  quick.appendChild(qbtn("tab", "Neuer Tab", () => { veil.createTab(); close(); }));
+  quick.appendChild(qbtn("reload", "Neu laden", () => { veil.reload(); close(); }));
+  p.appendChild(quick);
   p.appendChild(sep());
 
   // Zoom control row
-  const zoom = h(`<div class="flex items-center justify-between px-3 py-1.5">
-    <span class="text-sm text-[#d6dae2]">Zoom</span>
+  const zoom = h(`<div class="flex items-center justify-between px-2.5 py-1">
+    <span class="flex items-center gap-3 text-[13.5px] text-[#d6dae2]"><span class="text-[#9aa0ad]">${svg("fullscreen")}</span>Zoom</span>
     <div class="flex items-center gap-1">
       <button data-z="out" class="grid place-items-center h-7 w-7 rounded-md hover:bg-white/10 text-[#d6dae2]">−</button>
-      <button data-z="reset" class="text-xs text-[#9aa0ad] px-1.5 hover:text-white">Reset</button>
+      <button data-z="reset" class="text-xs text-[#9aa0ad] px-1.5 hover:text-white">100%</button>
       <button data-z="in" class="grid place-items-center h-7 w-7 rounded-md hover:bg-white/10 text-[#d6dae2]">+</button>
     </div></div>`);
   zoom.querySelectorAll<HTMLElement>("[data-z]").forEach((b) =>
@@ -169,19 +207,19 @@ function renderMenu(): HTMLElement {
   );
   p.appendChild(zoom);
 
-  p.appendChild(item("Downloads", "Strg+J", () => { ctx = { ...ctx, kind: "downloads" }; render(); }));
-  p.appendChild(item("Verlauf", "Strg+H", () => { veil.createTab("veil://history"); close(); }));
-  p.appendChild(item("Lesezeichen", "", () => { veil.createTab("veil://history"); close(); }));
+  p.appendChild(item("downloads", "Downloads", "Strg+J", () => { ctx = { ...ctx, kind: "downloads" }; render(); }));
+  p.appendChild(item("history", "Verlauf", "Strg+H", () => { veil.createTab("veil://history"); close(); }));
+  p.appendChild(item("bookmark", "Lesezeichen", "", () => { veil.createTab("veil://history"); close(); }));
   p.appendChild(sep());
-  p.appendChild(item("Seite übersetzen", "", () => { veil.translatePage(); close(); }));
-  p.appendChild(item("Drucken", "Strg+P", () => { veil.print(); close(); }));
-  p.appendChild(item("Vollbild", "F11", () => { veil.toggleFullscreen(); close(); }));
-  p.appendChild(item("Browserdaten löschen", "", () => { veil.clearData(); close(); }));
-  p.appendChild(item("Seitenleiste umschalten", "", () => { save({ sidebarCollapsed: !settings.sidebarCollapsed }); }));
+  p.appendChild(item("translate", "Seite übersetzen", "", () => { veil.translatePage(); close(); }));
+  p.appendChild(item("print", "Drucken", "Strg+P", () => { veil.print(); close(); }));
+  p.appendChild(item("fullscreen", "Vollbild", "F11", () => { veil.toggleFullscreen(); close(); }));
+  p.appendChild(item("sidebar", "Seitenleiste umschalten", "", () => { save({ sidebarCollapsed: !settings.sidebarCollapsed }); }));
   p.appendChild(sep());
-  p.appendChild(item("Einstellungen", "Strg+,", () => { veil.createTab("veil://settings"); close(); }));
-  p.appendChild(item("Statistik zurücksetzen", "", async () => { await veil.resetStats(); close(); }, true));
-  p.appendChild(item("Veil beenden", "", () => { veil.quit(); }, true));
+  p.appendChild(item("gear", "Einstellungen", "Strg+,", () => { veil.createTab("veil://settings"); close(); }));
+  p.appendChild(item("trash", "Browserdaten löschen", "", () => { veil.clearData(); close(); }));
+  p.appendChild(item("reset", "Statistik zurücksetzen", "", async () => { await veil.resetStats(); close(); }, true));
+  p.appendChild(item("power", "Veil beenden", "", () => { veil.quit(); }, true));
   return p;
 }
 

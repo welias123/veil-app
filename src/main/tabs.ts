@@ -1,7 +1,7 @@
 import { BrowserWindow, WebContentsView, Session } from "electron";
 import { EventEmitter } from "node:events";
 import path from "node:path";
-import { ChromeLayout, IPC, TabState } from "../shared/types";
+import { ChromeLayout, IPC, SEARCH_ENGINES, TabState } from "../shared/types";
 import { store } from "./settings";
 import { isOnion, checkTor } from "./proxy";
 import { history } from "./history";
@@ -48,7 +48,12 @@ export function resolveInput(input: string): string {
     return (raw.endsWith(".onion") ? "http://" : "https://") + raw;
   }
 
-  // Otherwise: search with Veil's own search page.
+  // Otherwise: search with Veil's own engine, or the chosen external one.
+  const s = store.getSettings();
+  if (!s.useVeilSearch) {
+    const eng = SEARCH_ENGINES[s.searchEngine] || SEARCH_ENGINES.duckduckgo;
+    return eng.url.replace("%s", encodeURIComponent(raw));
+  }
   return `veil://search?q=${encodeURIComponent(raw)}`;
 }
 

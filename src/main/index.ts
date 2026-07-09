@@ -101,6 +101,10 @@ async function configureSession() {
       delete details.requestHeaders["Sec-CH-UA-Platform-Version"];
       delete details.requestHeaders["Sec-CH-UA-Full-Version-List"];
     }
+    if (s.doNotTrack) {
+      details.requestHeaders["DNT"] = "1";
+      details.requestHeaders["Sec-GPC"] = "1";
+    }
     cb({ requestHeaders: details.requestHeaders });
   });
 

@@ -92,7 +92,22 @@ const ICONS: Record<string, string> = {
   suche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`,
   ai: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.6 2.9L16 19l-4-3.6L8 19l1.1-6.1L4.5 10l5.6-1.4z"/></svg>`,
   daten: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  newtab: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 13v4M10 15h4"/></svg>`,
+  downloads: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>`,
 };
+
+/** Native select row (for choices with many options, e.g. search engines). */
+function selectRow(key: keyof Settings, label: string, options: [string, string][], desc = ""): HTMLElement {
+  const row = h(`<div class="flex items-center justify-between py-3 gap-4">
+    <div class="pr-2"><div class="text-sm text-[#e7e9ef]">${label}</div>${desc ? `<div class="text-xs text-[#7b8291] mt-0.5">${desc}</div>` : ""}</div>
+    <select class="glass rounded-lg px-3 py-1.5 text-sm outline-none accent-ring shrink-0" style="background:rgba(0,0,0,0.25)">
+      ${options.map(([v, l]) => `<option value="${v}" ${s[key] === v ? "selected" : ""}>${l}</option>`).join("")}
+    </select></div>`);
+  row.querySelector("select")!.addEventListener("change", (e) => {
+    update({ [key]: (e.target as HTMLSelectElement).value } as any).then(rerender);
+  });
+  return row;
+}
 
 // Section registry for building the sidebar nav in render order.
 let NAV: { id: string; icon: string; title: string }[] = [];
@@ -138,7 +153,8 @@ function render() {
       toggle("blockScripts", "Skript-Blocker", "Blockiert Drittanbieter-Skripte (kann Seiten beeinträchtigen)."),
       toggle("fingerprintProtection", "Schutz vor Fingerprinting", "Randomisiert Canvas & reduziert Geräte-Entropie."),
       toggle("httpsEverywhere", "HTTPS erzwingen", "Verbindungen automatisch auf HTTPS upgraden."),
-      toggle("blockCookieBanners", "Cookie-Banner blockieren", "Banner automatisch schließen/ablehnen.")
+      toggle("blockCookieBanners", "Cookie-Banner blockieren", "Banner automatisch schließen/ablehnen."),
+      toggle("doNotTrack", "„Nicht verfolgen\"-Anfrage senden", "Sendet DNT- & GPC-Header an alle Websites.")
     )
   );
 
@@ -173,13 +189,16 @@ function render() {
     )
   );
 
-  // Search — Veil uses its own built-in, ad-free search engine (no selector).
-  const searchInfo = h(`<div class="flex items-center gap-3 py-3">
-    <span class="grid place-items-center h-9 w-9 rounded-lg shrink-0" style="background:var(--veil-accent-soft);color:var(--veil-accent)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    </span>
-    <div><div class="text-sm">Veil Suche</div><div class="text-xs text-[#7b8291] mt-0.5">Werbefrei · integriert · keine Weiterleitung zu Drittanbietern.</div></div></div>`);
-  host.appendChild(section("suche", "Suche", "Veil sucht mit der eigenen, werbefreien Suchmaschine.", searchInfo));
+  // Search — built-in Veil search, or a chosen external engine.
+  host.appendChild(
+    section("suche", "Suche", "Wähle, womit Veil aus der Adressleiste sucht.",
+      toggle("useVeilSearch", "Eigene Veil-Suche verwenden", "Werbefrei & integriert, keine Weiterleitung. Aus = externe Suchmaschine unten."),
+      selectRow("searchEngine", "Externe Suchmaschine", [
+        ["duckduckgo", "DuckDuckGo"], ["brave", "Brave Search"], ["startpage", "Startpage"],
+        ["google", "Google"], ["ecosia", "Ecosia"],
+      ], "Wird genutzt, wenn die Veil-Suche aus ist.")
+    )
+  );
 
   // Veil AI is free and always on — no configuration needed.
   const aiInfo = h(`<div class="flex items-center gap-3 py-3">
@@ -200,6 +219,28 @@ function render() {
   const blur = h(`<div class="py-3"><div class="text-sm mb-1">Blur-Filter</div></div>`);
   blur.appendChild(slider("blur", 0, 40, 1, (v) => `${Math.round(v)}px`));
   host.appendChild(section("design", "Design", "Hell oder dunkel, Lila bleibt die Akzentfarbe.", themeRow, fixed, opacity, blur));
+
+  // New-tab page
+  host.appendChild(
+    section("newtab", "Neuer Tab", "Was auf der Neuer-Tab-Seite angezeigt wird.",
+      toggle("newtabShowClock", "Uhr & Begrüßung", "Zeigt oben die Uhrzeit und einen Gruß."),
+      toggle("newtabShowTopSites", "Lieblingsseiten-Kacheln", "Meistbesuchte Seiten als Kacheln aus dem Verlauf."),
+      toggle("newtabShowStats", "Statistik-Karte", "Blockierte Tracker, gesparte Bandbreite & Zeit.")
+    )
+  );
+
+  // Downloads
+  const dlFolder = h(`<div class="flex items-center gap-3 py-3">
+    <span class="grid place-items-center h-9 w-9 rounded-lg shrink-0" style="background:var(--veil-accent-soft);color:var(--veil-accent)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M4 4v12l4-3h12V4z"/></svg>
+    </span>
+    <div><div class="text-sm">Speicherort</div><div class="text-xs text-[#7b8291] mt-0.5">Standardmäßig dein „Downloads\"-Ordner.</div></div></div>`);
+  host.appendChild(
+    section("downloads", "Downloads", "Wie Veil Dateien speichert.",
+      toggle("askDownloadLocation", "Vor jedem Download nach Speicherort fragen", "Zeigt einen Dialog, statt automatisch zu speichern."),
+      dlFolder
+    )
+  );
 
   // Layout & data
   const openHist = h(`<div class="flex items-center justify-between py-3"><div><div class="text-sm">Verlauf</div>

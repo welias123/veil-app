@@ -1,6 +1,7 @@
 import { app, Session, shell } from "electron";
 import path from "node:path";
 import { DownloadItem } from "../shared/types";
+import { store } from "./settings";
 
 /**
  * Brave-style downloads: intercept session downloads, save them straight to the
@@ -26,14 +27,20 @@ export function onDownloadsUpdate(cb: (list: DownloadItem[]) => void) {
 export function setupDownloads(session: Session) {
   session.on("will-download", (_e, item) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const target = uniquePath(item.getFilename());
-    item.setSavePath(target);
+    // If the user opted for "ask where to save", leave the save path unset so
+    // Electron shows the native save dialog; otherwise auto-save to Downloads.
+    const ask = store.getSettings().askDownloadLocation;
+    let target = "";
+    if (!ask) {
+      target = uniquePath(item.getFilename());
+      item.setSavePath(target);
+    }
     handles.set(id, item);
     samples.set(id, { t: Date.now(), bytes: 0, speed: 0 });
 
     const rec: DownloadItem = {
       id,
-      filename: path.basename(target),
+      filename: target ? path.basename(target) : item.getFilename(),
       url: item.getURL(),
       state: "progressing",
       received: 0,
@@ -62,6 +69,9 @@ export function setupDownloads(session: Session) {
       rec.received = item.getReceivedBytes();
       rec.speed = 0;
       rec.paused = false;
+      // With the save dialog, the real path is only known once chosen.
+      const saved = item.getSavePath();
+      if (saved) { rec.path = saved; rec.filename = path.basename(saved); }
       handles.delete(id);
       samples.delete(id);
       notify(items);

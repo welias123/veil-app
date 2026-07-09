@@ -16,7 +16,16 @@ export interface Settings {
   torSocksPort: number;
   routeAllThroughTor: boolean;
   // Search
-  searchEngine: string; // key into SEARCH_ENGINES
+  useVeilSearch: boolean; // true = built-in ad-free search; false = use searchEngine
+  searchEngine: string; // key into SEARCH_ENGINES (used when useVeilSearch is false)
+  // New-tab page toggles
+  newtabShowClock: boolean;
+  newtabShowTopSites: boolean;
+  newtabShowStats: boolean;
+  // Privacy extras
+  doNotTrack: boolean; // send "DNT: 1" header
+  // Downloads
+  askDownloadLocation: boolean; // show a save dialog instead of auto-saving
   // Theme engine
   theme: "dark" | "light"; // accent stays purple either way
   accent: string; // hex
@@ -202,7 +211,13 @@ export const DEFAULT_SETTINGS: Settings = {
   torEnabled: false,
   torSocksPort: 9050,
   routeAllThroughTor: false,
+  useVeilSearch: true,
   searchEngine: "duckduckgo",
+  newtabShowClock: true,
+  newtabShowTopSites: true,
+  newtabShowStats: true,
+  doNotTrack: false,
+  askDownloadLocation: false,
   theme: "dark",
   accent: "#7c6cff",
   backgroundOpacity: 0.72,

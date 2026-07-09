@@ -222,6 +222,12 @@ app.whenReady().then(async () => {
   if (applyStagedOnStartup()) return;
 
   const ses = await configureSession();
+
+  // "Clear cookies on exit": easiest reliable point is at startup — wipe the
+  // previous session's cookies before anything loads.
+  if (store.getSettings().clearCookiesOnExit) {
+    try { await ses.clearStorageData({ storages: ["cookies"] }); } catch { /* ignore */ }
+  }
   registerVeilProtocol(ses);
   const win = createWindow();
   const tabs = new TabManager(win, ses);

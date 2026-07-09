@@ -22,8 +22,18 @@ export interface Settings {
   newtabShowClock: boolean;
   newtabShowTopSites: boolean;
   newtabShowStats: boolean;
+  // Hidden top-site tiles: host -> visit count at hide time. A tile stays hidden
+  // until its visit count grows beyond that (i.e. it comes back if used often).
+  hiddenTiles: Record<string, number>;
   // Privacy extras
   doNotTrack: boolean; // send "DNT: 1" header
+  saveHistory: boolean; // record browsing history
+  clearCookiesOnExit: boolean; // wipe cookies + storage on quit
+  blockPopups: boolean; // deny window.open popups instead of opening a tab
+  blockAutoplay: boolean; // block media autoplay in new tabs
+  // Behaviour
+  defaultZoom: number; // default page zoom factor (1 = 100%)
+  translateTarget: string; // target language code for "translate page"
   // Downloads
   askDownloadLocation: boolean; // show a save dialog instead of auto-saving
   // Theme engine
@@ -216,7 +226,14 @@ export const DEFAULT_SETTINGS: Settings = {
   newtabShowClock: true,
   newtabShowTopSites: true,
   newtabShowStats: true,
+  hiddenTiles: {},
   doNotTrack: false,
+  saveHistory: true,
+  clearCookiesOnExit: false,
+  blockPopups: false,
+  blockAutoplay: false,
+  defaultZoom: 1,
+  translateTarget: "de",
   askDownloadLocation: false,
   theme: "dark",
   accent: "#7c6cff",

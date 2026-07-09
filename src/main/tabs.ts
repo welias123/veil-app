@@ -71,7 +71,8 @@ function toTranslateUrl(u: string): string | null {
     if (url.hostname.endsWith(".translate.goog")) return null; // already translated
     const host = url.hostname.replace(/-/g, "--").replace(/\./g, "-");
     const sep = url.search ? "&" : "?";
-    return `https://${host}.translate.goog${url.pathname}${url.search}${sep}_x_tr_sl=auto&_x_tr_tl=de&_x_tr_hl=de`;
+    const tl = store.getSettings().translateTarget || "de";
+    return `https://${host}.translate.goog${url.pathname}${url.search}${sep}_x_tr_sl=auto&_x_tr_tl=${tl}&_x_tr_hl=${tl}`;
   } catch {
     return null;
   }
@@ -109,6 +110,9 @@ export class TabManager extends EventEmitter {
         nodeIntegration: false,
         sandbox: true,
         session: this.session,
+        autoplayPolicy: store.getSettings().blockAutoplay
+          ? "document-user-activation-required"
+          : "no-user-gesture-required",
       },
     });
 
@@ -119,6 +123,11 @@ export class TabManager extends EventEmitter {
     const tab: Tab = { id, view, pinned: false };
     this.tabs.push(tab);
     this.wire(tab);
+
+    // Apply the user's default zoom once the first page has loaded.
+    view.webContents.once("did-finish-load", () => {
+      try { view.webContents.setZoomFactor(store.getSettings().defaultZoom || 1); } catch {}
+    });
 
     this.win.contentView.addChildView(view);
     this.load(id, url);
@@ -133,7 +142,7 @@ export class TabManager extends EventEmitter {
     const push = () => this.emitTabs();
 
     wc.on("page-title-updated", (_e, title) => {
-      history.add(wc.getURL(), title);
+      if (store.getSettings().saveHistory) history.add(wc.getURL(), title);
       push();
     });
     wc.on("page-favicon-updated", push);
@@ -151,7 +160,7 @@ export class TabManager extends EventEmitter {
 
     // Open target=_blank / window.open as new tabs instead of popups.
     wc.setWindowOpenHandler(({ url }) => {
-      this.create(url);
+      if (!store.getSettings().blockPopups) this.create(url);
       return { action: "deny" };
     });
 

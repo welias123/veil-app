@@ -2,6 +2,7 @@ import { HistoryEntry, SEARCH_ENGINES, Settings, Stats } from "../shared/types";
 
 interface Veil {
   getSettings(): Promise<Settings>;
+  setSettings(patch: Partial<Settings>): Promise<Settings>;
   getStats(): Promise<Stats>;
   onStats(cb: (s: Stats) => void): void;
   onSettings(cb: (s: Settings) => void): void;
@@ -114,8 +115,14 @@ async function renderTopSites() {
     if (cur) cur.count++;
     else map.set(host, { count: 1, url: `https://${host}/` });
   }
-  const top = [...map.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 12);
-  if (!top.length) return;
+  // Hidden tiles stay hidden until visited MORE than at hide-time (they return
+  // if you keep using the site). Then rank by visits and take the top 12.
+  const hidden = settings?.hiddenTiles || {};
+  const top = [...map.entries()]
+    .filter(([host, info]) => !(host in hidden) || info.count > hidden[host])
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 12);
+  if (!top.length) { el.innerHTML = ""; return; }
 
   el.innerHTML = "";
   for (const [host, info] of top) {
@@ -123,6 +130,7 @@ async function renderTopSites() {
     tile.className = "tile";
     const initial = host.charAt(0).toUpperCase();
     tile.innerHTML =
+      `<button class="tile-x" title="Ausblenden">&times;</button>` +
       `<span class="ic"><img src="https://icons.duckduckgo.com/ip3/${host}.ico" alt="" /></span>` +
       `<span class="lbl">${labelFor(host)}</span>`;
     const img = tile.querySelector("img")!;
@@ -132,6 +140,11 @@ async function renderTopSites() {
       ic.style.background = "var(--veil-accent-soft)";
       ic.style.color = "var(--veil-accent)";
     });
+    tile.querySelector(".tile-x")!.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      settings = await veil.setSettings({ hiddenTiles: { ...(settings.hiddenTiles || {}), [host]: info.count } });
+      renderTopSites();
+    });
     tile.addEventListener("click", () => { window.location.href = info.url; });
     el.appendChild(tile);
   }
@@ -140,7 +153,6 @@ async function renderTopSites() {
 async function init() {
   tickClock();
   setInterval(tickClock, 15_000);
-  renderTopSites();
 
   settings = await veil.getSettings();
   document.documentElement.classList.toggle("theme-light", settings.theme === "light");
@@ -149,6 +161,7 @@ async function init() {
   // New-tab visibility toggles.
   if (!settings.newtabShowClock) $("clock").parentElement!.style.display = "none";
   if (!settings.newtabShowTopSites) { const t = document.getElementById("tiles"); if (t) t.style.display = "none"; }
+  else renderTopSites();
   if (!settings.newtabShowStats) { const st = document.querySelector<HTMLElement>(".nt-stats"); if (st) st.style.display = "none"; }
 
   renderStats(await veil.getStats());

@@ -12,10 +12,10 @@
       /* Brave-style new tab: top-site tiles, centered search, compact stats card. */
       body { overflow-y: auto; }
       body.page-canvas { background: #0b0d12; }
+      /* Flat, restrained backdrop (avoids the glowy AI look). */
+      body.page-canvas { background: #0a0b0f; }
       body.page-canvas::before {
-        background:
-          radial-gradient(1000px 620px at 50% -8%, rgba(124,108,255,0.14), transparent 62%),
-          radial-gradient(760px 520px at 88% 108%, rgba(124,108,255,0.08), transparent 60%);
+        background: radial-gradient(620px 300px at 50% -16%, rgba(124,108,255,0.05), transparent 60%);
       }
       html.theme-light body.page-canvas { background: #eef0f5; }
 
@@ -39,11 +39,20 @@
       /* Top-site tiles */
       .nt-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
       .tile {
+        position: relative;
         width: 96px; display: flex; flex-direction: column; align-items: center; gap: 9px;
         padding: 14px 6px 12px; border-radius: 16px; cursor: pointer;
         transition: background 0.14s ease, transform 0.12s ease;
       }
       .tile:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+      .tile-x {
+        position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%;
+        display: grid; place-items: center; font-size: 15px; line-height: 1;
+        background: rgba(0,0,0,0.5); color: #d6dae2; border: none; cursor: pointer;
+        opacity: 0; transition: opacity 0.12s ease;
+      }
+      .tile:hover .tile-x { opacity: 1; }
+      .tile-x:hover { background: #ff5f6d; color: #fff; }
       html.theme-light .tile:hover { background: rgba(0,0,0,0.05); }
       .tile .ic {
         width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center;

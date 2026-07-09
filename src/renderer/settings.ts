@@ -94,7 +94,21 @@ const ICONS: Record<string, string> = {
   daten: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
   newtab: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 13v4M10 15h4"/></svg>`,
   downloads: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>`,
+  inhalte: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg>`,
 };
+
+/** Numeric select row (e.g. zoom levels). */
+function selectRowNum(key: keyof Settings, label: string, options: [number, string][], desc = ""): HTMLElement {
+  const row = h(`<div class="flex items-center justify-between py-3 gap-4">
+    <div class="pr-2"><div class="text-sm text-[#e7e9ef]">${label}</div>${desc ? `<div class="text-xs text-[#7b8291] mt-0.5">${desc}</div>` : ""}</div>
+    <select class="glass rounded-lg px-3 py-1.5 text-sm outline-none accent-ring shrink-0" style="background:rgba(0,0,0,0.25)">
+      ${options.map(([v, l]) => `<option value="${v}" ${s[key] === v ? "selected" : ""}>${l}</option>`).join("")}
+    </select></div>`);
+  row.querySelector("select")!.addEventListener("change", (e) => {
+    update({ [key]: parseFloat((e.target as HTMLSelectElement).value) } as any).then(rerender);
+  });
+  return row;
+}
 
 /** Native select row (for choices with many options, e.g. search engines). */
 function selectRow(key: keyof Settings, label: string, options: [string, string][], desc = ""): HTMLElement {
@@ -154,7 +168,9 @@ function render() {
       toggle("fingerprintProtection", "Schutz vor Fingerprinting", "Randomisiert Canvas & reduziert Geräte-Entropie."),
       toggle("httpsEverywhere", "HTTPS erzwingen", "Verbindungen automatisch auf HTTPS upgraden."),
       toggle("blockCookieBanners", "Cookie-Banner blockieren", "Banner automatisch schließen/ablehnen."),
-      toggle("doNotTrack", "„Nicht verfolgen\"-Anfrage senden", "Sendet DNT- & GPC-Header an alle Websites.")
+      toggle("doNotTrack", "„Nicht verfolgen\"-Anfrage senden", "Sendet DNT- & GPC-Header an alle Websites."),
+      toggle("blockPopups", "Pop-ups blockieren", "Verhindert, dass Seiten neue Fenster/Tabs aufzwingen."),
+      toggle("clearCookiesOnExit", "Cookies beim Beenden löschen", "Meldet dich bei jedem Neustart überall ab.")
     )
   );
 
@@ -208,6 +224,20 @@ function render() {
     <div><div class="text-sm">Veil AI ist aktiv</div><div class="text-xs text-[#7b8291] mt-0.5">Kostenlose KI-Antworten & Chat direkt in der Suche — für jeden, ohne Einrichtung.</div></div></div>`);
   host.appendChild(section("ai", "Veil AI", "Antworten auf Fragen direkt in der Suche.", aiInfo));
 
+  // Content behaviour
+  host.appendChild(
+    section("inhalte", "Inhalte", "Wie Seiten sich verhalten.",
+      toggle("blockAutoplay", "Autoplay blockieren", "Videos & Audio starten nicht von selbst (gilt für neue Tabs)."),
+      selectRowNum("defaultZoom", "Standard-Zoom", [
+        [0.8, "80 %"], [0.9, "90 %"], [1, "100 %"], [1.1, "110 %"], [1.25, "125 %"], [1.5, "150 %"],
+      ], "Zoomstufe für neu geöffnete Seiten."),
+      selectRow("translateTarget", "Übersetzen nach", [
+        ["de", "Deutsch"], ["en", "Englisch"], ["es", "Spanisch"], ["fr", "Französisch"],
+        ["it", "Italienisch"], ["tr", "Türkisch"], ["ru", "Russisch"], ["pl", "Polnisch"],
+      ], "Zielsprache für „Seite übersetzen\".")
+    )
+  );
+
   // Appearance — theme (dark/light) switch; accent stays FIXED (Veil purple).
   const themeRow = h(`<div class="py-3"><div class="text-sm mb-2">Erscheinungsbild</div></div>`);
   themeRow.appendChild(segmented("theme", [["dark", "Dunkel"], ["light", "Hell"]]));
@@ -259,6 +289,7 @@ function render() {
   reset.querySelector("button")!.addEventListener("click", () => veil.resetStats());
   host.appendChild(
     section("daten", "Verlauf & Daten", "Browserverlauf, Oberfläche und Statistiken.",
+      toggle("saveHistory", "Verlauf aufzeichnen", "Wenn aus, merkt sich Veil keine besuchten Seiten."),
       openHist,
       clearHist,
       toggle("sidebarCollapsed", "Seitenleiste eingeklappt", "Blendet die linke Navigationsleiste aus."),

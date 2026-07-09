@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
-  "notes": "Viel mehr Einstellungen (Suchmaschine, Neuer-Tab-Optionen, Do-Not-Track, Downloads) und ein neues Hauptmenu mit Icons.",
+  "version": "1.4.0",
+  "notes": "Kacheln ausblendbar, ruhigere Neuer-Tab-Seite und noch mehr Einstellungen (Zoom, Autoplay, Pop-ups, Cookies, Verlauf, Ubersetzungssprache).",
   "url": "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip"
 }

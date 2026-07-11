@@ -8,11 +8,15 @@
     />
     <title>Veil Suche</title>
     <link rel="stylesheet" href="styles.css" />
-    <style>body { overflow-y: auto; }</style>
+    <style>
+      body { overflow-y: auto; }
+      .search-header { background: rgba(11, 13, 19, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+      html.theme-light .search-header { background: rgba(238, 240, 245, 0.9); border-bottom-color: rgba(0, 0, 0, 0.08) !important; }
+    </style>
   </head>
   <body class="page-canvas min-h-screen">
     <!-- Header: Veil brand + search box -->
-    <header class="sticky top-0 z-10 border-b border-white/5" style="background:rgba(11,13,19,0.85);backdrop-filter:blur(12px)">
+    <header class="search-header sticky top-0 z-10 border-b border-white/5">
       <div class="max-w-3xl mx-auto px-6 py-3 flex items-center gap-4">
         <a href="veil://newtab" class="flex items-center gap-2 shrink-0 no-underline">
           <img src="icon.svg" alt="Veil" width="26" height="26" class="rounded-lg" />

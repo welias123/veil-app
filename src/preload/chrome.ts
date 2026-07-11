@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import {
-  IPC, AiMessage, AiReply, BookmarkItem, ChromeLayout, DownloadItem, HistoryEntry, NewsResult, OmniItem, OverlayContext, OverlayKind, SearchKind, SearchResult, Settings, StagedUpdateInfo, Stats, TabState, TorRuntimeStatus, UpdateInfo, UpdateProgress, VideoResult, WelcomeContent,
+  IPC, AiMessage, AiReply, BookmarkItem, ChromeLayout, DownloadItem, ExtensionInfo, HistoryEntry, NewsResult, OmniItem, OverlayContext, OverlayKind, SearchKind, SearchResult, Settings, StagedUpdateInfo, Stats, TabState, TorRuntimeStatus, UpdateInfo, UpdateProgress, VideoResult, WelcomeContent,
 } from "../shared/types";
 
 /**
@@ -82,6 +82,9 @@ export function exposeVeilApi() {
   onUpdateProgress: (cb: (p: UpdateProgress) => void) =>
     ipcRenderer.on(IPC.updateProgress, (_e, p) => cb(p)),
   getWelcome: (): Promise<WelcomeContent> => ipcRenderer.invoke(IPC.welcomeGet),
+  listExtensions: (): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extList),
+  loadExtension: (): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extLoad),
+  removeExtension: (id: string): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extRemove, id),
   platform: process.platform,
 
   // History

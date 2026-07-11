@@ -36,6 +36,8 @@ export interface Settings {
   translateTarget: string; // target language code for "translate page"
   // Downloads
   askDownloadLocation: boolean; // show a save dialog instead of auto-saving
+  // Extensions: folder paths of loaded unpacked Chrome extensions
+  extensions: string[];
   // Theme engine
   theme: "dark" | "light"; // accent stays purple either way
   accent: string; // hex
@@ -119,6 +121,13 @@ export interface UpdateProgress {
 
 export interface StagedUpdateInfo {
   version: string;
+}
+
+export interface ExtensionInfo {
+  id: string;
+  name: string;
+  version: string;
+  path: string;
 }
 
 export interface OmniItem {
@@ -235,6 +244,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultZoom: 1,
   translateTarget: "de",
   askDownloadLocation: false,
+  extensions: [],
   theme: "dark",
   accent: "#7c6cff",
   backgroundOpacity: 0.72,
@@ -315,6 +325,9 @@ export const IPC = {
   updateStaged: "update:staged", // query staged (downloaded) version
   updateProgress: "update:progress", // main -> renderer: live download progress
   welcomeGet: "welcome:get", // localized first-run welcome content
+  extList: "ext:list",
+  extLoad: "ext:load", // pick a folder + load an unpacked extension
+  extRemove: "ext:remove",
   // main -> renderer (send)
   tabsUpdated: "tabs:updated",
   statsUpdated: "stats:updated",

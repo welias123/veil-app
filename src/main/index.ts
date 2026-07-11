@@ -10,6 +10,7 @@ import { setupDownloads, onDownloadsUpdate } from "./downloads";
 import { tor } from "./tor";
 import { checkForUpdate, onUpdateProgress, autoDownloadUpdate, applyStagedOnStartup } from "./update";
 import { shouldShowWelcome } from "./welcome";
+import { loadStoredExtensions } from "./extensions";
 import { IPC, OverlayKind } from "../shared/types";
 
 const RENDERER_DIR = path.join(__dirname, "../renderer");
@@ -234,6 +235,9 @@ app.whenReady().then(async () => {
   const overlay = createOverlay(win, ses, tabs);
 
   registerIpc(win, tabs, ses, overlay);
+
+  // Re-load any unpacked extensions the user added.
+  loadStoredExtensions(ses);
 
   // Push download progress to the chrome UI (badge) and overlay (panel).
   onDownloadsUpdate((list) => {

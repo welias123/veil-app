@@ -1,4 +1,4 @@
-import { Settings, TorRuntimeStatus } from "../shared/types";
+import { ExtensionInfo, Settings, TorRuntimeStatus } from "../shared/types";
 
 interface Veil {
   getSettings(): Promise<Settings>;
@@ -9,6 +9,9 @@ interface Veil {
   clearHistory(): Promise<void>;
   setDefaultBrowser(): Promise<boolean>;
   isDefaultBrowser(): Promise<boolean>;
+  listExtensions(): Promise<ExtensionInfo[]>;
+  loadExtension(): Promise<ExtensionInfo[]>;
+  removeExtension(id: string): Promise<ExtensionInfo[]>;
 }
 const veil = (window as any).veil as Veil;
 
@@ -95,6 +98,7 @@ const ICONS: Record<string, string> = {
   newtab: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 13v4M10 15h4"/></svg>`,
   downloads: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>`,
   inhalte: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg>`,
+  ext: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v3a2 2 0 0 0 4 0V3h4v4h1a2 2 0 0 1 0 4h-1v6H6v-4H5a2 2 0 0 1 0-4h1V3z"/></svg>`,
 };
 
 /** Numeric select row (e.g. zoom levels). */
@@ -238,6 +242,13 @@ function render() {
     )
   );
 
+  // Extensions
+  const extLoadRow = h(`<div class="flex items-center justify-between py-3">
+    <div class="pr-4"><div class="text-sm">Erweiterung laden</div><div class="text-xs text-[#7b8291] mt-0.5">Ordner mit einer manifest.json wählen (entpackte Chrome-Erweiterung).</div></div>
+    <button id="ext-load" class="glass glass-hover text-sm px-4 py-2 rounded-lg shrink-0">Ordner wählen</button></div>`);
+  const extList = h(`<div id="ext-list" class="py-1"></div>`);
+  host.appendChild(section("ext", "Erweiterungen", "Entpackte Chrome-Erweiterungen laden (z. B. Werbeblocker). Nach dem Laden neue Tabs öffnen.", extLoadRow, extList));
+
   // Appearance — theme (dark/light) switch; accent stays FIXED (Veil purple).
   const themeRow = h(`<div class="py-3"><div class="text-sm mb-2">Erscheinungsbild</div></div>`);
   themeRow.appendChild(segmented("theme", [["dark", "Dunkel"], ["light", "Hell"]]));
@@ -298,8 +309,44 @@ function render() {
   );
 
   buildNav();
+  wireExtensions();
   const q = (document.getElementById("st-search") as HTMLInputElement | null)?.value ?? "";
   if (q) applySearch(q);
+}
+
+function escHtml(str: string): string {
+  return str.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+}
+function renderExtList(exts: ExtensionInfo[]) {
+  const list = document.getElementById("ext-list");
+  if (!list) return;
+  if (!exts.length) {
+    list.innerHTML = `<div class="text-xs text-[#7b8291] py-2">Noch keine Erweiterungen geladen.</div>`;
+    return;
+  }
+  list.innerHTML = "";
+  for (const e of exts) {
+    const row = h(`<div class="flex items-center justify-between py-2 st-row">
+      <div class="min-w-0 pr-3"><div class="text-sm truncate">${escHtml(e.name)}</div><div class="text-xs text-[#7b8291] truncate">v${escHtml(e.version)}</div></div>
+      <button data-rm="${e.id}" class="text-xs px-3 py-1.5 rounded-lg text-[#ff8b9e] glass glass-hover shrink-0">Entfernen</button></div>`);
+    row.querySelector("[data-rm]")!.addEventListener("click", async () => {
+      renderExtList(await veil.removeExtension(e.id));
+    });
+    list.appendChild(row);
+  }
+}
+function wireExtensions() {
+  const btn = document.getElementById("ext-load");
+  if (btn) {
+    btn.addEventListener("click", async () => {
+      try {
+        renderExtList(await veil.loadExtension());
+      } catch (err: any) {
+        alert(err?.message || "Konnte Erweiterung nicht laden.");
+      }
+    });
+  }
+  veil.listExtensions().then(renderExtList);
 }
 
 // ---------- Sidebar nav + search ----------

@@ -41,6 +41,10 @@ jobs:
   build-mac:
     name: Build macOS App
     runs-on: macos-latest
+    # Run AFTER the Windows job so both don't create separate GitHub releases for
+    # the same tag (a race that split assets across two releases). Windows creates
+    # the draft release; macOS then uploads its assets into that same release.
+    needs: build-windows
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -1,5 +1,5 @@
 {
-  "version": "1.8.0",
-  "notes": "Erweiterungen direkt aus dem Chrome Web Store laden (Link einfuegen) und korrekte Versionsanzeige in den Einstellungen.",
+  "version": "1.8.1",
+  "notes": "Standardbrowser funktioniert jetzt wirklich: Links oeffnen sich in Veil (Single-Instance + argv-Handling), Registrierung ueberlebt Updates.",
   "url": "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip"
 }

@@ -217,6 +217,35 @@ function hostOf(url: string): string {
   }
 }
 
+// Refs so the single-instance handler can route links into the running window.
+let winRef: BrowserWindow | null = null;
+let tabsRef: TabManager | null = null;
+/** First http(s) URL in a launch argv (Windows passes it when Veil opens a link). */
+function urlFromArgv(argv: string[]): string | undefined {
+  return argv.find((a) => /^https?:\/\//i.test(a));
+}
+
+// Single-instance: when Veil is the default browser and a link is clicked, Windows
+// launches Veil.exe with the URL. Route that into the already-running window
+// instead of spawning a second process that ignores the URL.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", (_e, argv) => {
+    const url = urlFromArgv(argv);
+    if (winRef && !winRef.isDestroyed()) {
+      if (winRef.isMinimized()) winRef.restore();
+      winRef.focus();
+      if (url && tabsRef) tabsRef.create(url);
+    }
+  });
+  // macOS opens links via this event rather than argv.
+  app.on("open-url", (e, url) => {
+    e.preventDefault();
+    if (tabsRef) tabsRef.create(url);
+    if (winRef && !winRef.isDestroyed()) winRef.focus();
+  });
+
 app.whenReady().then(async () => {
   // Seamless auto-update: if a newer version was staged last session, swap it in
   // and relaunch now before we build anything. (Packaged Windows only.)
@@ -233,6 +262,16 @@ app.whenReady().then(async () => {
   const win = createWindow();
   const tabs = new TabManager(win, ses);
   const overlay = createOverlay(win, ses, tabs);
+  winRef = win;
+  tabsRef = tabs;
+
+  // (Re)register Veil as an http/https handler on every launch so it survives
+  // updates. The user still confirms Veil as default in Windows settings, but
+  // this keeps the registration (and thus the option) present.
+  if (app.isPackaged) {
+    app.setAsDefaultProtocolClient("http");
+    app.setAsDefaultProtocolClient("https");
+  }
 
   registerIpc(win, tabs, ses, overlay);
 
@@ -277,8 +316,8 @@ app.whenReady().then(async () => {
   // Start Tor if it was left enabled.
   tor.apply(store.getSettings());
 
-  // First tab.
-  tabs.create(process.env.VEIL_DEBUG_URL || undefined);
+  // First tab — open the URL Windows passed (default-browser click), if any.
+  tabs.create(urlFromArgv(process.argv) || process.env.VEIL_DEBUG_URL || undefined);
 
   // First-run localized welcome (+ macOS manual-update warning) as an in-app
   // glass modal in the overlay — shown once the chrome UI has painted.
@@ -306,3 +345,4 @@ app.on("will-quit", () => tor.stop());
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
+} // end single-instance guard

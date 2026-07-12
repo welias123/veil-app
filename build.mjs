@@ -27,7 +27,7 @@ const mainConfigs = [
     // The adblocker resolves its preload path at runtime via
     // createRequire(import.meta.url); bundling breaks that, so keep it external
     // and let Node load its CommonJS build from node_modules.
-    external: ["electron", "electron-store", "@ghostery/adblocker-electron"],
+    external: ["electron", "electron-store", "electron-updater", "@ghostery/adblocker-electron"],
   },
   {
     ...common,

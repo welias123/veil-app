@@ -1,6 +1,6 @@
 {
   "name": "veil-browser",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Veil — a modern, privacy-first desktop browser with native Tor routing and built-in shields.",
   "author": "Veil",
   "license": "MIT",
@@ -18,7 +18,8 @@
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.5.0",
     "cross-fetch": "^4.0.0",
-    "electron-store": "^8.2.0"
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "@electron/packager": "^20.0.2",

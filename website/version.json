@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
-  "notes": "YouTube-Fix (Player wird nicht mehr blockiert), Update laeuft leise im Hintergrund ohne Fenster-Spam, Temp-Dateien werden nach dem Update geloescht.",
+  "version": "1.7.0",
+  "notes": "Neuer zuverlaessiger Auto-Updater (electron-updater): laedt nur Aenderungen, installiert leise beim Beenden, keine Update-Fenster-Schleife mehr.",
   "url": "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip"
 }

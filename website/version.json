@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0",
-  "notes": "Erweiterungen (entpackte Chrome-Extensions laden) und Hell-Modus-Fix auf der Suchseite.",
+  "version": "1.6.0",
+  "notes": "YouTube-Fix (Player wird nicht mehr blockiert), Update laeuft leise im Hintergrund ohne Fenster-Spam, Temp-Dateien werden nach dem Update geloescht.",
   "url": "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip"
 }

@@ -112,7 +112,12 @@ export async function applyShields(session: Session, settings: Settings): Promis
     blocker = await getEngine(settings.shieldLevel === "aggressive");
     syncAllowlist(blocker, settings.allowlist);
     wireStats(blocker);
-    blocker.enableBlockingInSession(session);
+    // NOTE: we deliberately do NOT call blocker.enableBlockingInSession(session).
+    // That path injects cosmetic filters + scriptlets into every page from the
+    // main process via executeJavaScript — which throws on Trusted-Types pages
+    // like YouTube ("Script failed to execute") and breaks the player. We keep
+    // the important part — network blocking + redirects — through our own
+    // installRequestHandler below, which delegates to blocker.onBeforeRequest.
   }
 
   installRequestHandler(session, settings);

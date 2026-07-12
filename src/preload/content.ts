@@ -65,6 +65,13 @@ function injectMainWorld(fn: () => void) {
   }
 }
 
+// Sites whose strict Trusted-Types / players reject main-world injection — skip
+// the fingerprint payload there so we never stall them.
+function isFingerprintExempt(): boolean {
+  const h = location.hostname;
+  return /(^|\.)youtube\.com$|(^|\.)youtu\.be$|(^|\.)youtube-nocookie\.com$|(^|\.)google\.com$|(^|\.)chatgpt\.com$|(^|\.)openai\.com$/.test(h);
+}
+
 // --- Cookie banner heuristics ---
 const REJECT_WORDS = [
   "reject all", "alle ablehnen", "ablehnen", "decline", "necessary only",
@@ -174,7 +181,10 @@ async function main() {
     /* settings unavailable; use safe defaults */
   }
 
-  if (!settings || settings.fingerprintProtection) {
+  // Canvas-noise fingerprint defence — only when the user enabled it, and never
+  // on YouTube (its player + strict Trusted-Types reject the injection, which
+  // showed up as "Script failed to execute" and could stall playback).
+  if (settings?.fingerprintProtection && !isFingerprintExempt()) {
     injectMainWorld(fingerprintPayload);
   }
 
@@ -214,10 +224,6 @@ export function runContentProtections() {
     } else {
       main();
     }
-    // Fingerprint payload injected for earliest coverage (best-effort; strict
-    // Trusted-Types pages like YouTube reject it, which is fine).
-    injectMainWorld(fingerprintPayload);
-
     // Site-specific enhancements (DOM is shared with the page).
     matchSearchBackground();
     youtubeBypass();

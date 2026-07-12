@@ -398,8 +398,8 @@ async function init() {
     lastDone = done;
   });
 
-  // Show the update window when a newer version is available.
-  veil.onUpdateAvailable(() => veil.openOverlay("update", 0));
+  // Updates apply silently in the background (downloaded on launch, swapped in
+  // on the next restart — Chrome-style). No nagging modal on every launch.
 
   // Reflect Tor availability in the badge tooltip.
   const tor = await veil.torStatus();

@@ -226,6 +226,7 @@ export function applyUpdate(): boolean {
   const installDir = path.dirname(app.getPath("exe"));
   const exePath = app.getPath("exe");
 
+  const tempRoot = path.join(os.tmpdir(), "veil-update");
   const script = [
     "$ErrorActionPreference='SilentlyContinue'",
     `try { Wait-Process -Id ${process.pid} -Timeout 30 } catch {}`,
@@ -233,6 +234,8 @@ export function applyUpdate(): boolean {
     // /E all subdirs (incl. empty), retry a couple times for briefly-locked files.
     `robocopy "${staged.dir}" "${installDir}" /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null`,
     `Start-Process -FilePath "${exePath}"`,
+    // Free the ~113 MB temp copy once it's been applied.
+    `Remove-Item -Recurse -Force "${tempRoot}"`,
   ].join("\r\n");
 
   const scriptPath = path.join(os.tmpdir(), `veil-apply-${Date.now()}.ps1`);

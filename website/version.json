@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
-  "notes": "Neuer zuverlaessiger Auto-Updater (electron-updater): laedt nur Aenderungen, installiert leise beim Beenden, keine Update-Fenster-Schleife mehr.",
+  "version": "1.8.0",
+  "notes": "Erweiterungen direkt aus dem Chrome Web Store laden (Link einfuegen) und korrekte Versionsanzeige in den Einstellungen.",
   "url": "https://github.com/welias123/veil-app/releases/latest/download/Veil-Windows.zip"
 }

@@ -28,7 +28,7 @@ export interface OverlayCtl {
 
 import { getUpdate, downloadUpdate, applyUpdate, getStagedUpdate } from "./update";
 import { getWelcomeContent } from "./welcome";
-import { listExtensions, addExtension, removeExtension } from "./extensions";
+import { listExtensions, addExtension, removeExtension, installFromWebStore } from "./extensions";
 
 export function registerIpc(win: BrowserWindow, tabs: TabManager, ses: Session, overlay: OverlayCtl) {
   const send = (channel: string, payload: unknown) => {
@@ -150,7 +150,11 @@ export function registerIpc(win: BrowserWindow, tabs: TabManager, ses: Session, 
   // ---- Extensions ----
   ipcMain.handle(IPC.extList, () => listExtensions(ses));
   ipcMain.handle(IPC.extLoad, () => addExtension(ses, win));
+  ipcMain.handle(IPC.extInstallStore, (_e, input: string) => installFromWebStore(ses, input));
   ipcMain.handle(IPC.extRemove, (_e, id: string) => removeExtension(ses, id));
+
+  // ---- App ----
+  ipcMain.handle(IPC.appVersion, () => app.getVersion());
 
   // ---- Default browser ----
   ipcMain.handle(IPC.setDefaultBrowser, () => {

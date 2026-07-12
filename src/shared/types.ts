@@ -327,7 +327,9 @@ export const IPC = {
   welcomeGet: "welcome:get", // localized first-run welcome content
   extList: "ext:list",
   extLoad: "ext:load", // pick a folder + load an unpacked extension
+  extInstallStore: "ext:install-store", // download + load a Chrome Web Store extension
   extRemove: "ext:remove",
+  appVersion: "app:version",
   // main -> renderer (send)
   tabsUpdated: "tabs:updated",
   statsUpdated: "stats:updated",

@@ -84,7 +84,9 @@ export function exposeVeilApi() {
   getWelcome: (): Promise<WelcomeContent> => ipcRenderer.invoke(IPC.welcomeGet),
   listExtensions: (): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extList),
   loadExtension: (): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extLoad),
+  installStoreExtension: (input: string): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extInstallStore, input),
   removeExtension: (id: string): Promise<ExtensionInfo[]> => ipcRenderer.invoke(IPC.extRemove, id),
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke(IPC.appVersion),
   platform: process.platform,
 
   // History

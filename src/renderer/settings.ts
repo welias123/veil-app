@@ -11,7 +11,9 @@ interface Veil {
   isDefaultBrowser(): Promise<boolean>;
   listExtensions(): Promise<ExtensionInfo[]>;
   loadExtension(): Promise<ExtensionInfo[]>;
+  installStoreExtension(input: string): Promise<ExtensionInfo[]>;
   removeExtension(id: string): Promise<ExtensionInfo[]>;
+  getAppVersion(): Promise<string>;
 }
 const veil = (window as any).veil as Veil;
 
@@ -243,11 +245,20 @@ function render() {
   );
 
   // Extensions
+  const extStoreRow = h(`<div class="py-3">
+    <div class="text-sm mb-0.5">Aus dem Chrome Web Store</div>
+    <div class="text-xs text-[#7b8291] mb-2">Web-Store-Link oder Erweiterungs-ID einfügen — Veil lädt & installiert sie selbst.</div>
+    <div class="flex items-center gap-2">
+      <input id="ext-store-input" type="text" spellcheck="false" placeholder="https://chromewebstore.google.com/detail/…"
+        class="flex-1 glass rounded-lg px-3 py-2 text-sm outline-none accent-ring" style="background:rgba(0,0,0,0.25)" />
+      <button id="ext-store-btn" class="text-sm px-4 py-2 rounded-lg font-medium shrink-0" style="background:var(--veil-accent);color:#fff">Laden</button>
+    </div>
+    <div id="ext-store-msg" class="text-xs mt-1.5"></div></div>`);
   const extLoadRow = h(`<div class="flex items-center justify-between py-3">
-    <div class="pr-4"><div class="text-sm">Erweiterung laden</div><div class="text-xs text-[#7b8291] mt-0.5">Ordner mit einer manifest.json wählen (entpackte Chrome-Erweiterung).</div></div>
+    <div class="pr-4"><div class="text-sm">Aus Ordner laden</div><div class="text-xs text-[#7b8291] mt-0.5">Ordner mit einer manifest.json wählen (entpackte Erweiterung).</div></div>
     <button id="ext-load" class="glass glass-hover text-sm px-4 py-2 rounded-lg shrink-0">Ordner wählen</button></div>`);
   const extList = h(`<div id="ext-list" class="py-1"></div>`);
-  host.appendChild(section("ext", "Erweiterungen", "Entpackte Chrome-Erweiterungen laden (z. B. Werbeblocker). Nach dem Laden neue Tabs öffnen.", extLoadRow, extList));
+  host.appendChild(section("ext", "Erweiterungen", "Chrome-Erweiterungen (z. B. Werbeblocker) laden. Nach dem Laden neue Tabs öffnen.", extStoreRow, extLoadRow, extList));
 
   // Appearance — theme (dark/light) switch; accent stays FIXED (Veil purple).
   const themeRow = h(`<div class="py-3"><div class="text-sm mb-2">Erscheinungsbild</div></div>`);
@@ -346,6 +357,28 @@ function wireExtensions() {
       }
     });
   }
+  const storeBtn = document.getElementById("ext-store-btn");
+  const storeInput = document.getElementById("ext-store-input") as HTMLInputElement | null;
+  const storeMsg = document.getElementById("ext-store-msg");
+  const install = async () => {
+    if (!storeInput || !storeMsg) return;
+    const val = storeInput.value.trim();
+    if (!val) return;
+    storeMsg.textContent = "Lädt …";
+    storeMsg.style.color = "#7b8291";
+    try {
+      renderExtList(await veil.installStoreExtension(val));
+      storeMsg.textContent = "Erweiterung geladen. Öffne einen neuen Tab.";
+      storeMsg.style.color = "#33d6c4";
+      storeInput.value = "";
+    } catch (err: any) {
+      storeMsg.textContent = err?.message || "Konnte nicht laden.";
+      storeMsg.style.color = "#ff8b9e";
+    }
+  };
+  if (storeBtn) storeBtn.addEventListener("click", install);
+  if (storeInput) storeInput.addEventListener("keydown", (e) => { if (e.key === "Enter") install(); });
+
   veil.listExtensions().then(renderExtList);
 }
 
@@ -404,6 +437,12 @@ async function init() {
   torState = await veil.torStatus();
   applyThemePreview(s);
   render();
+
+  // Real app version in the footer (was hardcoded).
+  veil.getAppVersion().then((v) => {
+    const f = document.querySelector(".st-foot");
+    if (f) f.textContent = `Veil Browser · v${v}`;
+  });
 
   const search = document.getElementById("st-search") as HTMLInputElement;
   search.addEventListener("input", () => applySearch(search.value));
